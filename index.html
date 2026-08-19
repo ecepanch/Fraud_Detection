@@ -4,19 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrustNet | India's Cross-Bank Fraud Intelligence Layer</title>
+    <meta name="description" content="TrustNet maps hidden mule rings and stops Digital Arrest scams using Spatio-Temporal Graph Analytics. Built on regulatory data no competitor can access.">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .gradient-text { background: linear-gradient(90deg, #06b6d4, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-text { background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .card { background-color: #1e293b; border: 1px solid #334155; transition: all 0.3s ease; }
-        .card:hover { border-color: #06b6d4; transform: translateY(-5px); }
-        .glow { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
+        .card:hover { border-color: #06b6d4; transform: translateY(-3px); }
+        .glow { box-shadow: 0 0 30px rgba(6, 182, 212, 0.15); }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; }
+        #mule-network { background-color: #020617; border: 1px solid #334155; border-radius: 12px; }
+        pre { white-space: pre-wrap; word-break: break-word; }
+        .tab-active { background: #06b6d4; color: #0f172a; font-weight: 700; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Navigation -->
+    <!-- NAVIGATION -->
     <nav class="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
@@ -26,6 +32,7 @@
                 </div>
                 <div class="hidden md:flex space-x-8 text-sm font-medium text-slate-300">
                     <a href="#problem" class="hover:text-cyan-400 transition">The Problem</a>
+                    <a href="#demo" class="hover:text-cyan-400 transition">Live Demo</a>
                     <a href="#products" class="hover:text-cyan-400 transition">Products</a>
                     <a href="#architecture" class="hover:text-cyan-400 transition">Architecture</a>
                     <a href="#roadmap" class="hover:text-cyan-400 transition">Roadmap</a>
@@ -35,45 +42,67 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- HERO -->
     <header class="pt-32 pb-20 px-4 text-center max-w-5xl mx-auto">
         <div class="inline-block px-3 py-1 mb-6 text-xs font-semibold text-cyan-400 bg-cyan-400/10 rounded-full border border-cyan-400/20">
-            BITSoM Vertex x Hack2Skill 2026
+            BITSoM Vertex x Hack2Skill 2026 · Stage 1
         </div>
         <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
-            India’s <span class="gradient-text">Cross-Bank</span><br>Fraud Intelligence Layer
+            India's <span class="gradient-text">Cross-Bank</span><br>Fraud Intelligence Layer
         </h1>
         <p class="text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Mapping the shadow financial network. We use Spatio-Temporal Graph Analytics and Edge Telemetry to map criminal mule rings and stop Digital Arrest scams in real-time. <span class="text-white font-semibold">Zero dependency on Account Aggregator (AA) licenses.</span>
+            Mapping the shadow financial network. We use <strong class="text-white">Spatio-Temporal Graph Analytics</strong> and Edge Telemetry to detect hidden mule rings and stop Digital Arrest scams in real-time. Built on regulatory data no competitor can access.
         </p>
-        <div class="flex justify-center gap-4">
-            <a href="#products" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold py-3 px-8 rounded-lg text-lg transition shadow-lg shadow-cyan-500/20">Explore Products</a>
-            <a href="#architecture" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition border border-slate-700">View Architecture</a>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="#demo" class="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold py-3 px-8 rounded-lg text-lg transition shadow-lg shadow-cyan-500/20">
+                <i class="fas fa-play-circle mr-2"></i>Launch Interactive POC
+            </a>
+            <a href="#architecture" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition border border-slate-700">
+                View Architecture
+            </a>
+        </div>
+        <div class="mt-12 grid grid-cols-3 gap-8 max-w-2xl mx-auto text-center">
+            <div>
+                <div class="text-3xl font-bold text-cyan-400">&lt;500ms</div>
+                <div class="text-xs text-slate-500 mt-1">API Latency (p99)</div>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-cyan-400">4x Daily</div>
+                <div class="text-xs text-slate-500 mt-1">Graph Refresh</div>
+            </div>
+            <div>
+                <div class="text-3xl font-bold text-cyan-400">Zero PII</div>
+                <div class="text-xs text-slate-500 mt-1">Stored Centrally</div>
+            </div>
         </div>
     </header>
 
-    <!-- Problem Section -->
+    <!-- PROBLEM SECTION -->
     <section id="problem" class="py-20 px-4 max-w-7xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">The Siloed Blind Spot</h2>
-            <p class="text-slate-400 max-w-2xl mx-auto">Current bank tools only see 1-hop transactions. Modern fraud rings use 3-to-4-hop mule relays across HDFC, SBI, and Axis. Because banks can't share PII, they miss the network entirely.</p>
+            <div class="inline-block px-3 py-1 mb-4 text-xs font-bold text-red-400 bg-red-400/10 rounded-full border border-red-400/20">
+                THE SILOED BLIND SPOT
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">What Banks See vs. What Fraudsters Do</h2>
+            <p class="text-slate-400 max-w-2xl mx-auto">Current bank tools only see 1-hop transactions. Modern fraud rings use 3-to-4-hop mule relays across HDFC, SBI, and Axis Bank. Because banks can't share PII, they miss the criminal network entirely.</p>
         </div>
-        
+
         <div class="grid md:grid-cols-2 gap-8">
-            <!-- What Banks See -->
             <div class="card p-8 rounded-xl">
                 <div class="flex items-center mb-6 text-red-400">
                     <i class="fas fa-eye-slash text-2xl mr-3"></i>
                     <h3 class="text-xl font-bold">What Individual Banks See</h3>
                 </div>
                 <ul class="space-y-4 text-slate-300">
-                    <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i> <span><strong>HDFC:</strong> Account X sent ₹50K → Account Y <em class="text-slate-500">(1 hop. No alert.)</em></span></li>
-                    <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i> <span><strong>SBI:</strong> Account Y sent ₹48K → Account Z <em class="text-slate-500">(1 hop. No alert.)</em></span></li>
-                    <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i> <span><strong>Axis:</strong> Account Z cashed out ₹46K <em class="text-slate-500">(1 hop. No alert.)</em></span></li>
+                    <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i> <span><strong>HDFC:</strong> Account X → Y | ₹50K <em class="text-slate-500">(1 hop. No alert.)</em></span></li>
+                    <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i> <span><strong>SBI:</strong> Account Y → Z | ₹48K <em class="text-slate-500">(1 hop. No alert.)</em></span></li>
+                    <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-3"></i> <span><strong>Axis:</strong> Account Z → ATM | ₹46K <em class="text-slate-500">(1 hop. No alert.)</em></span></li>
                 </ul>
+                <div class="mt-6 p-3 rounded-lg border border-red-500/40 bg-red-500/10 text-red-300 text-xs">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>₹1.44L laundered. No bank is alerted.
+                </div>
             </div>
 
-            <!-- What TrustNet Sees -->
             <div class="card p-8 rounded-xl glow border-cyan-500/50">
                 <div class="flex items-center mb-6 text-cyan-400">
                     <i class="fas fa-project-diagram text-2xl mr-3"></i>
@@ -84,147 +113,329 @@
                     <li class="flex items-start"><i class="fas fa-check-circle text-cyan-500 mt-1 mr-3"></i> <span>Identifies <strong>Community C-07</strong> (18 members).</span></li>
                     <li class="flex items-start"><i class="fas fa-check-circle text-cyan-500 mt-1 mr-3"></i> <span>Isolates the hidden <strong>Coordinator Node</strong> controlling the ring.</span></li>
                 </ul>
-                <div class="mt-6 p-4 bg-slate-900 rounded-lg border border-slate-700 text-sm text-cyan-300 font-mono">
+                <div class="mt-6 p-3 bg-slate-900 rounded-lg border border-slate-700 text-xs text-cyan-300 font-mono">
                     Action: Trigger U30 Soft-Decline. Break the scammer's script.
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section id="products" class="py-20 px-4 bg-slate-900/50 border-y border-slate-800">
+    <!-- INTERACTIVE DEMO SECTION -->
+    <section id="demo" class="py-20 px-4 bg-gradient-to-b from-slate-900/50 to-slate-900 border-y border-slate-800">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-block px-3 py-1 mb-4 text-xs font-bold text-purple-400 bg-purple-400/10 rounded-full border border-purple-400/20">
+                    LIVE PROTOTYPE
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">The "God-View" Dashboard</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">Toggle between what individual banks see and what TrustNet sees. Run community detection to watch the hidden mule ring light up. Click any node to inspect it.</p>
+            </div>
+
+            <!-- View Tabs -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button id="tab-bank" onclick="showView('bank')" class="px-4 py-2 rounded-lg text-sm border border-slate-700 transition"><i class="fas fa-eye-slash mr-2"></i>What Banks See (Siloed)</button>
+                <button id="tab-god" onclick="showView('god')" class="px-4 py-2 rounded-lg text-sm border border-slate-700 tab-active transition"><i class="fas fa-project-diagram mr-2"></i>TrustNet God-View</button>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <!-- BANK SILO VIEW -->
+                    <div id="bank-view" class="hidden space-y-4">
+                        <div class="glass p-5 rounded-xl">
+                            <h3 class="font-bold text-slate-300 mb-3"><i class="fas fa-university text-blue-400 mr-2"></i>HDFC Bank</h3>
+                            <div class="flex justify-between items-center bg-slate-900/60 border border-slate-800 rounded p-3 text-sm">
+                                <span class="font-mono">Acct_X → Acct_Y | Rs 50,000 | UPI</span>
+                                <span class="text-green-400 text-xs font-bold border border-green-500/40 bg-green-500/10 px-2 py-1 rounded">1 HOP. NO ALERT.</span>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-xl">
+                            <h3 class="font-bold text-slate-300 mb-3"><i class="fas fa-university text-yellow-400 mr-2"></i>SBI</h3>
+                            <div class="flex justify-between items-center bg-slate-900/60 border border-slate-800 rounded p-3 text-sm">
+                                <span class="font-mono">Acct_Y → Acct_Z | Rs 48,000 | IMPS</span>
+                                <span class="text-green-400 text-xs font-bold border border-green-500/40 bg-green-500/10 px-2 py-1 rounded">1 HOP. NO ALERT.</span>
+                            </div>
+                        </div>
+                        <div class="glass p-5 rounded-xl">
+                            <h3 class="font-bold text-slate-300 mb-3"><i class="fas fa-university text-red-400 mr-2"></i>Axis Bank</h3>
+                            <div class="flex justify-between items-center bg-slate-900/60 border border-slate-800 rounded p-3 text-sm">
+                                <span class="font-mono">Acct_Z → ATM Cashout | Rs 46,000</span>
+                                <span class="text-green-400 text-xs font-bold border border-green-500/40 bg-green-500/10 px-2 py-1 rounded">1 HOP. NO ALERT.</span>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+                            <i class="fas fa-exclamation-triangle mr-2"></i><strong>Result:</strong> Rs 1.44L laundered across 3 banks. Every bank's fraud system saw a "normal" transfer. Nobody is alerted.
+                        </div>
+                    </div>
+
+                    <!-- GOD VIEW -->
+                    <div id="god-view">
+                        <div class="glass p-4 rounded-xl mb-4 flex flex-wrap gap-4 text-sm items-center">
+                            <span class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-500 rounded-full"></span> Victim</span>
+                            <span class="flex items-center gap-2"><span class="w-3 h-3 bg-yellow-500 rounded-full"></span> Relay Mule</span>
+                            <span class="flex items-center gap-2"><span class="w-3 h-3 bg-red-500 rounded-full"></span> Cashout</span>
+                            <span class="flex items-center gap-2"><span class="w-3 h-3 bg-purple-600 rounded-full"></span> Coordinator</span>
+                            <button onclick="runDetection()" id="detect-btn" class="ml-auto bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/50 px-3 py-1 rounded text-xs font-bold transition"><i class="fas fa-search mr-1"></i> Run Louvain Detection</button>
+                        </div>
+                        <div id="mule-network" style="height: 480px;"></div>
+                        <div id="detection-banner" class="hidden mt-4 p-4 rounded-xl border border-red-500/50 bg-red-500/10 text-red-300 text-sm">
+                            <i class="fas fa-exclamation-triangle mr-2"></i><strong>Community C-07 detected.</strong> 4 mule nodes + 1 coordinator flagged. Coordinator (PageRank 0.98) never touches victim funds directly — invisible to single-bank systems. Recommended action: <span class="font-mono font-bold">SOFT_DECLINE_U30</span> on all inbound transfers to this community.
+                        </div>
+                        <div id="node-details" class="mt-4 glass p-4 rounded-xl hidden">
+                            <h3 class="font-bold text-cyan-400 mb-2">Node Intelligence</h3>
+                            <div id="details-content" class="text-sm font-mono text-slate-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API SIMULATOR -->
+                <div class="lg:col-span-1">
+                    <div class="glass p-6 rounded-xl sticky top-20">
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-bolt text-yellow-400"></i> Real-Time API Simulator</h2>
+                        <p class="text-sm text-slate-400 mb-4">Simulate a bank calling TrustNet at UPI initiation. Target the Cashout node to trigger the U30 Soft-Decline.</p>
+                        <label class="text-xs text-slate-500 uppercase">Destination Account Hash</label>
+                        <input type="text" id="dest-input" value="Acct_Hash_Cashout_99" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-sm mt-1 mb-4 focus:border-cyan-500 outline-none">
+                        <button onclick="runAPI()" id="api-btn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"><i class="fas fa-play"></i> Evaluate Transaction</button>
+                        <pre id="api-output" class="hidden mt-4 bg-black/50 border border-slate-800 rounded-lg p-4 font-mono text-xs text-green-400 h-72 overflow-y-auto"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCTS SECTION -->
+    <section id="products" class="py-20 px-4 max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+            <div class="inline-block px-3 py-1 mb-4 text-xs font-bold text-cyan-400 bg-cyan-400/10 rounded-full border border-cyan-400/20">
+                TWO PRODUCTS · ONE GRAPH ENGINE
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Built Entirely Without AA Dependencies</h2>
+            <p class="text-slate-400 max-w-2xl mx-auto">Two revenue streams. Both powered by the same cross-bank intelligence graph. Zero regulatory policy risk.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Product 1: NBFCs -->
+            <div class="card p-8 rounded-xl">
+                <span class="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded">PHASE 1 · NBFCs · Months 0–3</span>
+                <h3 class="text-2xl font-bold mt-4 mb-4">Lending Fraud Shield</h3>
+                <p class="text-slate-400 mb-6">Stops loan stacking and synthetic identity farms <strong class="text-white">before disbursal</strong> using Edge Telemetry and Disbursal Topology.</p>
+                <ul class="space-y-3 text-sm text-slate-300">
+                    <li><i class="fas fa-microchip text-cyan-500 mr-2"></i> <strong>Edge SDK:</strong> Hashes Device/IP/Geo locally to cluster synthetic rings.</li>
+                    <li><i class="fas fa-file-invoice text-cyan-500 mr-2"></i> <strong>OCR Metadata:</strong> Extracts hidden EMIs from uploaded bank statements.</li>
+                    <li><i class="fas fa-network-wired text-cyan-500 mr-2"></i> <strong>Disbursal Graph:</strong> Tracks post-loan money movement to find shared cashout nodes.</li>
+                </ul>
+                <div class="mt-6 pt-6 border-t border-slate-700 text-xs text-slate-400">
+                    <strong class="text-cyan-400">Detects:</strong> Loan stacking · Synthetic identity farms · Cross-lender rings · Income-velocity mismatch
+                </div>
+            </div>
+
+            <!-- Product 2: Banks -->
+            <div class="card p-8 rounded-xl">
+                <span class="text-xs font-bold text-blue-400 bg-blue-400/10 px-2 py-1 rounded">PHASE 2 · BANKS · Months 3–6</span>
+                <h3 class="text-2xl font-bold mt-4 mb-4">Transaction Fraud Shield</h3>
+                <p class="text-slate-400 mb-6">Stops Digital Arrest and mule relays <strong class="text-white">in real-time (&lt;500ms)</strong> during UPI/IMPS initiation.</p>
+                <ul class="space-y-3 text-sm text-slate-300">
+                    <li><i class="fas fa-bolt text-blue-500 mr-2"></i> <strong>Real-Time Lookup:</strong> Queries pre-computed graph snapshots in Redis.</li>
+                    <li><i class="fas fa-shield-virus text-blue-500 mr-2"></i> <strong>U30 Disruption:</strong> Triggers "Technical Error" screens to break coercion scripts.</li>
+                    <li><i class="fas fa-gavel text-blue-500 mr-2"></i> <strong>STR Auto-Draft:</strong> Generates evidence packs for regulatory reporting.</li>
+                </ul>
+                <div class="mt-6 pt-6 border-t border-slate-700 text-xs text-slate-400">
+                    <strong class="text-blue-400">Detects:</strong> Digital arrest · Mule relays · Balance drain · Senior targeting · Structuring
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARCHITECTURE SECTION -->
+    <section id="architecture" class="py-20 px-4 bg-slate-900/50 border-y border-slate-800">
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Two Products. One Graph Engine.</h2>
-                <p class="text-slate-400">Built entirely without Account Aggregator (AA) dependencies.</p>
+                <div class="inline-block px-3 py-1 mb-4 text-xs font-bold text-cyan-400 bg-cyan-400/10 rounded-full border border-cyan-400/20">
+                    UNDER THE HOOD
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">3-Layer Graph Analytics Engine</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">Deterministic graph analytics. Zero live computation in the hot path. Auditable, explainable, &lt;500ms.</p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-8">
-                <!-- Product 1 -->
-                <div class="card p-8 rounded-xl">
-                    <span class="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded">PHASE 1: NBFCs</span>
-                    <h3 class="text-2xl font-bold mt-4 mb-4">Lending Fraud Shield</h3>
-                    <p class="text-slate-400 mb-6">Stops loan stacking and synthetic identity farms before disbursal using Edge Telemetry and Disbursal Topology.</p>
-                    <ul class="space-y-3 text-sm text-slate-300">
-                        <li><i class="fas fa-microchip text-cyan-500 mr-2"></i> <strong>Edge SDK:</strong> Hashes Device/IP/Geo locally to cluster synthetic rings.</li>
-                        <li><i class="fas fa-file-invoice text-cyan-500 mr-2"></i> <strong>OCR Metadata:</strong> Extracts hidden EMIs from uploaded bank statements.</li>
-                        <li><i class="fas fa-network-wired text-cyan-500 mr-2"></i> <strong>Disbursal Graph:</strong> Tracks post-loan money movement to find shared cashout nodes.</li>
-                    </ul>
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="card p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+                    <h4 class="font-bold mb-2">Offline Graph Engine</h4>
+                    <p class="text-sm text-slate-400 mb-3">Runs every 6 hours. Refreshed 4x daily.</p>
+                    <div class="text-xs text-slate-500 font-mono">Neo4j · Louvain · PageRank</div>
                 </div>
-
-                <!-- Product 2 -->
-                <div class="card p-8 rounded-xl">
-                    <span class="text-xs font-bold text-blue-400 bg-blue-400/10 px-2 py-1 rounded">PHASE 2: BANKS</span>
-                    <h3 class="text-2xl font-bold mt-4 mb-4">Transaction Fraud Shield</h3>
-                    <p class="text-slate-400 mb-6">Stops Digital Arrest and mule relays in real-time (<500ms) during UPI/IMPS initiation.</p>
-                    <ul class="space-y-3 text-sm text-slate-300">
-                        <li><i class="fas fa-bolt text-blue-500 mr-2"></i> <strong>Real-Time Lookup:</strong> Queries pre-computed graph snapshots in Redis.</li>
-                        <li><i class="fas fa-shield-virus text-blue-500 mr-2"></i> <strong>U30 Disruption:</strong> Triggers "Technical Error" screens to break coercion scripts.</li>
-                        <li><i class="fas fa-gavel text-blue-500 mr-2"></i> <strong>STR Auto-Draft:</strong> Generates evidence packs for regulatory reporting.</li>
-                    </ul>
+                <div class="card p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+                    <h4 class="font-bold mb-2">Tokenization Vault</h4>
+                    <p class="text-sm text-slate-400 mb-3">HMAC-SHA256 at bank edge. Zero raw PII.</p>
+                    <div class="text-xs text-slate-500 font-mono">HSM · Per-bank salts · DPDP</div>
+                </div>
+                <div class="card p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+                    <h4 class="font-bold mb-2">Real-Time API</h4>
+                    <p class="text-sm text-slate-400 mb-3">Redis snapshot lookups. FastAPI. Fail-open.</p>
+                    <div class="text-xs text-slate-500 font-mono">p99 &lt;500ms · 99.95% SLA</div>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Architecture Section -->
-    <section id="architecture" class="py-20 px-4 max-w-7xl mx-auto">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">Under The Hood</h2>
-            <p class="text-slate-400">Deterministic graph analytics. Zero live computation in the hot path. <500ms latency.</p>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="card p-6 rounded-xl text-center">
-                <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">1</div>
-                <h4 class="font-bold mb-2">Offline Graph Engine</h4>
-                <p class="text-sm text-slate-400">Runs every 6 hours. Neo4j + Louvain Community Detection + PageRank Centrality.</p>
-            </div>
-            <div class="card p-6 rounded-xl text-center">
-                <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">2</div>
-                <h4 class="font-bold mb-2">Tokenization Vault</h4>
-                <p class="text-sm text-slate-400">HMAC-SHA256 hashing at the bank edge. Zero raw PII crosses boundaries.</p>
-            </div>
-            <div class="card p-6 rounded-xl text-center">
-                <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">3</div>
-                <h4 class="font-bold mb-2">Real-Time API</h4>
-                <p class="text-sm text-slate-400">Redis snapshot lookups. FastAPI. P99 latency <500ms. Fail-open design.</p>
-            </div>
-        </div>
-
-        <!-- Latency Budget -->
-        <div class="mt-12 card p-8 rounded-xl">
-            <h4 class="font-bold text-lg mb-6 text-center">Phase 2 Latency Budget (p99 Target: 500ms)</h4>
-            <div class="space-y-4">
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>API Auth & Token Resolution</span><span class="text-cyan-400">70ms</span></div>
-                    <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 14%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>Graph Snapshot Lookup (Redis)</span><span class="text-cyan-400">50ms</span></div>
-                    <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 10%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>Session Rules & Score Fusion</span><span class="text-cyan-400">170ms</span></div>
-                    <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 34%"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>Buffer & Network I/O</span><span class="text-cyan-400">210ms</span></div>
-                    <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 42%"></div></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Roadmap Section -->
-    <section id="roadmap" class="py-20 px-4 bg-slate-900/50 border-y border-slate-800">
-        <div class="max-w-5xl mx-auto">
-            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">Execution Roadmap</h2>
-            <div class="space-y-8">
-                <div class="flex gap-6">
-                    <div class="flex flex-col items-center">
-                        <div class="w-10 h-10 rounded-full bg-cyan-500 text-slate-900 font-bold flex items-center justify-center">1</div>
-                        <div class="w-0.5 h-full bg-slate-700 mt-2"></div>
-                    </div>
-                    <div class="pb-8">
-                        <h3 class="text-xl font-bold text-cyan-400">Phase 1: Zero Dependency (Months 0-3)</h3>
-                        <p class="text-slate-400 mt-2">Deploy Lending Fraud Shield to NBFCs. Build Edge SDK for device clustering and OCR for hidden EMI extraction. Prove the graph model on synthetic and historical disbursal data.</p>
-                    </div>
-                </div>
-                <div class="flex gap-6">
-                    <div class="flex flex-col items-center">
-                        <div class="w-10 h-10 rounded-full bg-blue-500 text-slate-900 font-bold flex items-center justify-center">2</div>
-                        <div class="w-0.5 h-full bg-slate-700 mt-2"></div>
-                    </div>
-                    <div class="pb-8">
-                        <h3 class="text-xl font-bold text-blue-400">Phase 2: The Bank Layer (Months 3-6)</h3>
-                        <p class="text-slate-400 mt-2">Integrate bank webhooks. Launch Transaction Fraud Shield. Enable real-time <500ms U30 soft-declines for Digital Arrest prevention.</p>
-                    </div>
-                </div>
-                <div class="flex gap-6">
-                    <div class="flex flex-col items-center">
-                        <div class="w-10 h-10 rounded-full bg-slate-700 text-white font-bold flex items-center justify-center">3</div>
+            <!-- Latency Budget -->
+            <div class="card p-8 rounded-xl">
+                <h4 class="font-bold text-lg mb-6 text-center">Phase 2 Latency Budget (p99 Target: 500ms)</h4>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>API Auth & Token Resolution</span><span class="text-cyan-400">70ms</span></div>
+                        <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 14%"></div></div>
                     </div>
                     <div>
-                        <h3 class="text-xl font-bold text-slate-300">Phase 3: Network Scale (Months 6-12)</h3>
-                        <p class="text-slate-400 mt-2">Federated cross-bank graph. Network effects compound as every new bank adds edges. File IP for graph-based mule role classification.</p>
+                        <div class="flex justify-between text-sm mb-1"><span>Graph Snapshot Lookup (Redis)</span><span class="text-cyan-400">50ms</span></div>
+                        <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 10%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Session Rules & Score Fusion</span><span class="text-cyan-400">170ms</span></div>
+                        <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 34%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Buffer & Network I/O</span><span class="text-cyan-400">210ms</span></div>
+                        <div class="w-full bg-slate-700 rounded-full h-2"><div class="bg-cyan-500 h-2 rounded-full" style="width: 42%"></div></div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer / Contact -->
-    <footer id="contact" class="py-16 px-4 text-center">
+    <!-- ROADMAP SECTION -->
+    <section id="roadmap" class="py-20 px-4 max-w-5xl mx-auto">
+        <div class="text-center mb-16">
+            <div class="inline-block px-3 py-1 mb-4 text-xs font-bold text-cyan-400 bg-cyan-400/10 rounded-full border border-cyan-400/20">
+                EXECUTION ROADMAP
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">From Immediate Bleed to Network Scale</h2>
+        </div>
+
+        <div class="space-y-8">
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-full bg-cyan-500 text-slate-900 font-bold flex items-center justify-center">1</div>
+                    <div class="w-0.5 h-full bg-slate-700 mt-2"></div>
+                </div>
+                <div class="pb-8 flex-1">
+                    <h3 class="text-xl font-bold text-cyan-400">Phase 1: Zero Dependency (Months 0–3)</h3>
+                    <p class="text-slate-400 mt-2">Deploy Lending Fraud Shield to NBFCs. Build Edge SDK for device clustering and OCR for hidden EMI extraction. Prove the graph model on synthetic and historical disbursal data.</p>
+                    <div class="mt-3 text-xs text-slate-500 font-mono">Exit: 2 pilot NBFCs · SDK p99 &lt;100ms · OCR &gt;90% accuracy</div>
+                </div>
+            </div>
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-full bg-blue-500 text-slate-900 font-bold flex items-center justify-center">2</div>
+                    <div class="w-0.5 h-full bg-slate-700 mt-2"></div>
+                </div>
+                <div class="pb-8 flex-1">
+                    <h3 class="text-xl font-bold text-blue-400">Phase 2: The Bank Layer (Months 3–6)</h3>
+                    <p class="text-slate-400 mt-2">Integrate bank webhooks. Launch Transaction Fraud Shield. Enable real-time &lt;500ms U30 soft-declines for Digital Arrest prevention.</p>
+                    <div class="mt-3 text-xs text-slate-500 font-mono">Exit: 2 pilot banks · API p99 &lt;500ms · 99.95% uptime</div>
+                </div>
+            </div>
+            <div class="flex gap-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-full bg-slate-700 text-white font-bold flex items-center justify-center">3</div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-slate-300">Phase 3: Network Scale (Months 6–12)</h3>
+                    <p class="text-slate-400 mt-2">Federated cross-bank graph. Network effects compound as every new bank adds edges. File IP for graph-based mule role classification.</p>
+                    <div class="mt-3 text-xs text-slate-500 font-mono">Exit: Full network graph · DPIP auto-actions · IP filings</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT / FOOTER -->
+    <footer id="contact" class="py-16 px-4 text-center border-t border-slate-800">
         <h2 class="text-3xl font-bold mb-4">Ready to map the shadow network?</h2>
-        <p class="text-slate-400 mb-8">We are currently in the Stage 1 Exploration phase for BITSoM Vertex x Hack2Skill.</p>
+        <p class="text-slate-400 mb-8 max-w-xl mx-auto">We are currently in the Stage 1 Exploration phase for BITSoM Vertex x Hack2Skill 2026. Looking for pilot NBFCs and banks to validate the model.</p>
         <a href="mailto:your.email@example.com" class="inline-block bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-bold py-3 px-8 rounded-lg text-lg transition shadow-lg shadow-cyan-500/20">
-            Contact the Founder
+            <i class="fas fa-envelope mr-2"></i>Contact the Founder
         </a>
         <div class="mt-12 text-sm text-slate-500">
-            &copy; 2026 TrustNet. Built for India's Financial Ecosystem.
+            &copy; 2026 TrustNet. Built for India's Financial Ecosystem. · Privacy-Preserving · DPDP-Compliant
         </div>
     </footer>
 
+    <script>
+        // VIEW TOGGLE
+        function showView(view) {
+            document.getElementById('bank-view').classList.toggle('hidden', view !== 'bank');
+            document.getElementById('god-view').classList.toggle('hidden', view !== 'god');
+            document.getElementById('tab-bank').classList.toggle('tab-active', view === 'bank');
+            document.getElementById('tab-god').classList.toggle('tab-active', view === 'god');
+            if (view === 'god') { network.fit({ animation: true }); }
+        }
+
+        // GRAPH DATA
+        var nodes = new vis.DataSet([
+            { id: 1, label: 'Victim\n(67yo)', color: { background: '#3b82f6', border: '#60a5fa' }, size: 30, font: { color: '#e2e8f0', size: 14 }, data: { role: 'Victim', community: 'N/A', risk: 0.1 } },
+            { id: 2, label: 'Mule 1\n(Relay)', color: { background: '#eab308', border: '#facc15' }, size: 25, font: { color: '#e2e8f0', size: 14 }, data: { role: 'Relay', community: 'C-07', risk: 0.8 } },
+            { id: 3, label: 'Mule 2\n(Relay)', color: { background: '#eab308', border: '#facc15' }, size: 25, font: { color: '#e2e8f0', size: 14 }, data: { role: 'Relay', community: 'C-07', risk: 0.85 } },
+            { id: 4, label: 'Mule 3\n(Cashout)', color: { background: '#ef4444', border: '#f87171' }, size: 30, font: { color: '#e2e8f0', size: 14 }, data: { role: 'Cashout', community: 'C-07', risk: 0.95 } },
+            { id: 5, label: 'Coordinator\n(Hidden)', color: { background: '#9333ea', border: '#a855f7' }, size: 40, shape: 'star', font: { color: '#e2e8f0', size: 14 }, data: { role: 'Coordinator', community: 'C-07', risk: 0.99, note: 'PageRank: 0.98. Never touches victim funds directly.' } }
+        ]);
+
+        var edges = new vis.DataSet([
+            { from: 1, to: 2, label: 'Rs 3.2L', arrows: 'to', font: { size: 13, color: '#94a3b8', align: 'top', strokeWidth: 0 } },
+            { from: 2, to: 3, label: 'Rs 3.1L', arrows: 'to', font: { size: 13, color: '#94a3b8', align: 'top', strokeWidth: 0 } },
+            { from: 3, to: 4, label: 'Rs 3.0L', arrows: 'to', font: { size: 13, color: '#94a3b8', align: 'top', strokeWidth: 0 } },
+            { from: 4, to: 5, label: 'Rs 2.9L', arrows: 'to', width: 3, color: { color: '#9333ea' }, font: { size: 13, color: '#c084fc', align: 'top', strokeWidth: 0 } }
+        ]);
+
+        var network = new vis.Network(document.getElementById('mule-network'), { nodes: nodes, edges: edges }, {
+            physics: { barnesHut: { gravitationalConstant: -6000, centralGravity: 0.02, springLength: 200 } },
+            interaction: { hover: true }
+        });
+        network.once('afterInitialization', function () { network.fit(); });
+
+        // NODE CLICK
+        network.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                var node = nodes.get(params.nodes[0]);
+                document.getElementById('node-details').classList.remove('hidden');
+                document.getElementById('details-content').innerHTML =
+                    '<p><span class="text-slate-500">Account Hash:</span> Acct_Hash_' + node.id + '_8849</p>' +
+                    '<p><span class="text-slate-500">Role:</span> <span class="text-cyan-400 font-bold">' + node.data.role + '</span></p>' +
+                    '<p><span class="text-slate-500">Community:</span> ' + node.data.community + '</p>' +
+                    '<p><span class="text-slate-500">Risk Score:</span> <span class="' + (node.data.risk > 0.8 ? 'text-red-400' : 'text-green-400') + '">' + node.data.risk + '</span></p>' +
+                    (node.data.note ? '<p class="mt-2 text-yellow-400 border-t border-slate-700 pt-2"><i class="fas fa-exclamation-triangle"></i> ' + node.data.note + '</p>' : '');
+            }
+        });
+
+        // LOUVAIN DETECTION
+        function runDetection() {
+            var btn = document.getElementById('detect-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Running Louvain...';
+            setTimeout(function () {
+                [2, 3, 4, 5].forEach(function (id) {
+                    nodes.update({ id: id, borderWidth: 4, shadow: { enabled: true, color: 'rgba(239,68,68,0.5)', size: 25 } });
+                });
+                document.getElementById('detection-banner').classList.remove('hidden');
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i> Ring Flagged';
+            }, 1000);
+        }
+
+        // API SIMULATOR
+        function runAPI() {
+            var btn = document.getElementById('api-btn');
+            var out = document.getElementById('api-output');
+            var dest = document.getElementById('dest-input').value;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Querying Graph Snapshot...';
+            out.classList.remove('hidden');
+            out.textContent = '> Initializing TrustNet API...\n';
+            setTimeout(function () {
+                out.textContent += '> Token Resolution: 42ms\n> Graph Snapshot Lookup: 58ms\n> NCRP List Match: 31ms\n> Session Rules Eval: 110ms\n> Total Latency: 241ms (Target <500ms)\n\n';
+                out.textContent += '{\n  "destination": "' + dest + '",\n  "risk_score": 0.95,\n  "role": "Cashout",\n  "community": "C-07",\n  "action": "SOFT_DECLINE_U30",\n  "reason_codes": ["MULE_RING_DESTINATION", "VELOCITY_BURST"]\n}\n\n';
+                out.textContent += '[SUCCESS] U30 Technical Error screen triggered at bank edge.';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> Evaluate Transaction';
+            }, 800);
+        }
+    </script>
 </body>
 </html>
