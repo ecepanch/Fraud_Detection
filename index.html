@@ -44,7 +44,15 @@
 <div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3 text-sm mb-4">
   <span class="font-mono text-cyan-400">DAY <span id="day">0</span></span>
   <button id="play" class="bg-cyan-500 text-slate-900 font-bold px-4 py-1.5 rounded">▶ Play</button>
-  <button id="speed" class="bg-slate-700 px-3 py-1.5 rounded">1x</button>
+  <select id="speed" class="bg-slate-700 text-white px-2 py-1.5 rounded text-sm border border-slate-600">
+    <option value="0.25">0.25x</option>
+    <option value="0.5">0.5x</option>
+    <option value="0.75">0.75x</option>
+    <option value="1" selected>1x</option>
+    <option value="2">2x</option>
+    <option value="4">4x</option>
+    <option value="8">8x</option>
+  </select>
   <button id="reset" class="bg-slate-700 px-3 py-1.5 rounded">↺ Reset</button>
   <label class="flex items-center gap-2 text-yellow-300"><input id="xray" type="checkbox" class="lever"> X-RAY (God View)</label>
 </div>
@@ -413,7 +421,7 @@ function log(msg,color){
 }
 
 document.getElementById('play').onclick=e=>{ S.running=!S.running; e.target.textContent=S.running?'⏸ Pause':'▶ Play'; };
-document.getElementById('speed').onclick=e=>{ S.speed=S.speed===1?4:1; e.target.textContent=S.speed+'x'; };
+document.getElementById('speed').onchange=e=>{ S.speed=parseFloat(e.target.value); };
 document.getElementById('reset').onclick=()=>{ seed=42; AID=0; S.seenRings=new Set();
   document.getElementById('log').innerHTML=''; document.getElementById('day').textContent='0';
   document.getElementById('mind').textContent='"Waiting for pressure. Every lever you pull teaches me."';
