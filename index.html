@@ -25,7 +25,7 @@
     <p class="text-xl text-slate-300 mb-6">A world model of India's shadow financial economy.</p>
     <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">The adversary remembers, adapts, and evolves when you intervene. Pull the defense levers and watch the network fight back.</p>
     <p class="text-xs text-slate-500 mb-8 uppercase tracking-widest">Track: Robotics & Simulation</p>
-    <button onclick="document.getElementById('intro').remove(); S.running=true; document.getElementById('play').textContent='⏸ Pause';"
+    <button onclick="document.getElementById('intro').remove(); S.running=true; document.getElementById('play').textContent=' Pause';"
       class="bg-cyan-500 text-slate-900 font-bold px-8 py-3 rounded-lg text-xl hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">▶ START SIMULATION</button>
   </div>
 </div>
@@ -55,6 +55,9 @@
   </select>
   <button id="reset" class="bg-slate-700 px-3 py-1.5 rounded">↺ Reset</button>
   <label class="flex items-center gap-2 text-yellow-300"><input id="xray" type="checkbox" class="lever"> X-RAY (God View)</label>
+  <span class="font-mono text-red-400">STOLEN ₹<span id="stolen">0</span>L</span>
+  <span class="font-mono text-slate-300">BURNED <span id="burnedN">0</span></span>
+  <span class="font-mono text-blue-300">VICTIMS <span id="victims">0</span></span>
 </div>
 
 <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-4">
@@ -68,6 +71,7 @@
     </div>
     <label class="flex items-center gap-2 text-sm"><input id="u30" type="checkbox" class="lever"> U30 Disruption (soft-decline screens)</label>
     <label class="flex items-center gap-2 text-sm"><input id="dpip" type="checkbox" class="lever"> DPIP Regulatory Feed (instant seeds)</label>
+    <label class="flex items-center gap-2 text-sm"><input id="coord" type="checkbox" class="lever"> 🎯 Coordinator targeting (decapitation)</label>
     <div>
       <label class="text-xs text-slate-400">Bank webhook coverage: <span id="cov-val">60%</span></label>
       <input id="cov" type="range" min="0" max="1" step="0.1" value="0.6" class="lever w-full">
@@ -81,11 +85,14 @@
       </div>
     </div>
 
+    <h2 class="font-bold text-emerald-400 pt-2">RING STRATEGIES — live</h2>
+    <div id="strategies" class="text-xs font-mono space-y-1 text-slate-300"></div>
+
     <h2 class="font-bold text-cyan-400 pt-2">WORLD EVENT LOG</h2>
-    <div id="log" class="h-40 overflow-y-auto text-xs font-mono space-y-1"></div>
+    <div id="log" class="h-32 overflow-y-auto text-xs font-mono space-y-1"></div>
 
     <h2 class="font-bold text-red-400 pt-2">BURNED ACCOUNTS — never reused</h2>
-    <div id="burned" class="h-24 overflow-y-auto text-xs font-mono text-slate-400">No accounts burned yet.</div>
+    <div id="burned" class="h-20 overflow-y-auto text-xs font-mono text-slate-400">No accounts burned yet.</div>
 
     <h2 class="font-bold text-purple-400 pt-2">ADVERSARY'S MIND</h2>
     <div id="mind" class="text-xs italic text-purple-300">"Waiting for pressure. Every lever you pull teaches me."</div>
@@ -123,7 +130,7 @@ function ri(n){ return Math.floor(rng()*n); }
 const BANKS=10, byId={};
 let AID=0;
 const S={ day:0, agents:[], txns:[], recent:[], rings:[], metrics:[], running:false, speed:1,
-  levers:{ th:0.7, u30:false, dpip:false, cov:0.6 }, seenRings:new Set() };
+  levers:{ th:0.7, u30:false, dpip:false, cov:0.6, coord:false }, seenRings:new Set() };
 
 function addAgent(type,bank,ringId){ const a={id:'A'+(AID++),type,bank,ringId:ringId||null,frozen:false,frozenDay:0,flagged:0}; S.agents.push(a); byId[a.id]=a; return a; }
 
@@ -161,8 +168,8 @@ function tick(){
     const relays=ring.members.filter(m=>m.type==='relay'&&!m.frozen);
     const coll=ring.members.find(m=>m.type==='collector'&&!m.frozen);
     const cash=ring.members.find(m=>m.type==='cashout'&&!m.frozen);
-    const coord=ring.members.find(m=>m.type==='coordinator');
-    if(!coll||!cash||relays.length===0) continue;
+    const coord=ring.members.find(m=>m.type==='coordinator'&&!m.frozen);
+    if(!coll||!cash||!coord||relays.length===0) continue;
     const path=[v,coll,...relays.slice(0,ring.behavior.dark?1:2),cash,coord];
     const splits=ring.behavior.structuring?4:1;
     const base=(40000+rng()*60000)/splits;
@@ -202,8 +209,18 @@ function detect(){
       }
     }
   }
+  // Coordinator targeting: graph trace to find boss
+  if(S.levers.coord){
+    S.rings.forEach(r=>{
+      const known=r.members.filter(m=>m.flagged>0.2).length;
+      const c=r.members.find(m=>m.type==='coordinator'&&!m.frozen);
+      if(known>=2 && c && c.flagged<1){ c.flagged=1;
+        log('Day '+S.day+' GRAPH TRACE: '+r.id+' resolved to coordinator '+c.id,'cyan'); }
+    });
+  }
   S.agents.forEach(a=>{
-    if(!a.frozen && a.type!=='victim' && a.flagged>=S.levers.th){
+    const coordHit=S.levers.coord&&a.type==='coordinator'&&a.flagged>=0.3;
+    if(!a.frozen && a.type!=='victim' && (a.flagged>=S.levers.th||coordHit)){
       a.frozen=true; a.frozenDay=S.day;
       if(a.ringId){ const r=S.rings.find(x=>x.id===a.ringId); if(r) r.burned.push({id:a.id,day:S.day,type:a.type}); }
       log('Day '+S.day+' FREEZE '+a.id+' ('+a.type+') risk '+a.flagged.toFixed(2), a.ringId?'red':'orange');
@@ -216,11 +233,30 @@ function adapt(){
   const fr=S.agents.filter(a=>a.frozen&&S.day-a.frozenDay<10).length/15;
   let changed=false;
   for(const ring of S.rings){
-    if(ring.members.filter(m=>!m.frozen).length<3){
-      ring.members.push(addAgent('relay',ri(BANKS),ring.id));
-      log('Day '+S.day+' '+ring.id+' recruited NEW mule — burned accounts remembered, never reused.','purple');
-      changed=true;
+    // Role-aware recruitment
+    [['collector',1],['cashout',1],['relay',2]].forEach(function(rc){
+      const role=rc[0], need=rc[1];
+      const active=ring.members.filter(m=>m.type===role&&!m.frozen).length;
+      if(active<need){
+        ring.members.push(addAgent(role,ri(BANKS),ring.id));
+        log('Day '+S.day+' '+ring.id+' recruited NEW '+role+' — burned accounts remembered, never reused.','purple');
+        changed=true;
+      }
+    });
+    // Coordinator targeting: promote relay if coordinator frozen
+    if(S.levers.coord){
+      const activeCoord=ring.members.find(m=>m.type==='coordinator'&&!m.frozen);
+      if(!activeCoord){
+        const relays=ring.members.filter(m=>m.type==='relay'&&!m.frozen);
+        if(relays.length>=2){
+          const promo=relays.slice().sort((x,y)=>x.flagged-y.flagged)[0];
+          promo.type='coordinator'; promo.flagged=0;
+          log('Day '+S.day+' '+ring.id+' PROMOTED '+promo.id+' to coordinator — the network re-heads itself.','purple');
+          changed=true;
+        }
+      }
     }
+    // Adaptations
     if(fr>0.3&&!ring.behavior.structuring){ ring.behavior.structuring=true; log('Day '+S.day+' '+ring.id+' ADAPTS: splitting amounts below reporting threshold.','yellow'); changed=true; }
     if(S.levers.u30&&!ring.behavior.synthetic){ ring.behavior.synthetic=true; log('Day '+S.day+' '+ring.id+' ADAPTS: U30 pressure → synthetic-KYC recruitment.','yellow'); changed=true; }
     if(S.levers.dpip&&!ring.behavior.cash){ ring.behavior.cash=true; log('Day '+S.day+' '+ring.id+' ADAPTS: DPIP pressure → extra hop + cash cashout.','yellow'); changed=true; }
@@ -245,37 +281,6 @@ const fallbackNarratives=[
   "Burned accounts are retired. We never reuse a face twice."
 ];
 function getAdversaryThought(){
-  /* VENUE UPGRADE: To enable Anthropic API:
-     1. Add "async" keyword before this function declaration
-     2. Uncomment the try/catch block below
-     3. Replace YOUR_KEY_HERE with your API key
-     4. Verify model string at docs.anthropic.com (claude-sonnet-4-5 may need updating)
-     The caller in adapt() already handles both sync and async returns. */
-  /*
-  try {
-    const logLines = Array.from(document.querySelectorAll('#log > div')).slice(0,5).map(d=>d.innerText).join('\n');
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{
-        'content-type':'application/json',
-        'anthropic-version':'2023-06-01',
-        'x-api-key':'YOUR_KEY_HERE',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body: JSON.stringify({
-        model:'claude-sonnet-4-5',
-        max_tokens:60,
-        messages:[{
-          role:'user',
-          content:'You are the cold, analytical mind of an adaptive money-mule network. Recent events:\n'+logLines+'\nWrite ONE first-person sentence (<=25 words) explaining your latest adaptation.'
-        }]
-      })
-    });
-    const j = await r.json();
-    if(j.content && j.content[0] && j.content[0].text) return j.content[0].text;
-  } catch(e){}
-  */
-  
   return fallbackNarratives[Math.floor(Math.random()*fallbackNarratives.length)];
 }
 
@@ -407,6 +412,16 @@ function render(){
   chartDet.data.datasets[2].data=S.metrics.map(m=>m.fp);
   chartDet.update('none');
 
+  // RING STRATEGIES + SCOREBOARD
+  document.getElementById('strategies').innerHTML = S.rings.map(r=>{ const b=r.behavior;
+    const operational = r.members.some(m=>m.type==='collector'&&!m.frozen) && r.members.some(m=>m.type==='cashout'&&!m.frozen);
+    const tags=[b.structuring?'structuring':null,b.synthetic?'synthetic-KYC':null,b.cash?'cash-out':null,b.dark?'dark hops':null].filter(Boolean);
+    return '<div><span class="text-cyan-300">'+r.id+'</span> '+(operational?'<span class="text-emerald-400">ACTIVE</span>':'<span class="text-red-400">DORMANT</span>')+' · '+(tags.length?tags.join(' · '):'no pressure yet')+'</div>'; }).join('');
+  const stolen=S.metrics.reduce((s,m)=>s+m.loss,0);
+  document.getElementById('stolen').textContent=Math.round(stolen/100000);
+  document.getElementById('burnedN').textContent=S.agents.filter(a=>a.frozen&&a.ringId).length;
+  document.getElementById('victims').textContent=new Set(S.txns.filter(t=>t.ring&&byId[t.from]&&byId[t.from].type==='victim').map(t=>t.from)).size;
+
   // BURNED ACCOUNTS
   const rows=S.rings.flatMap(r=>r.burned.map(b=>({...b,ring:r.id})));
   document.getElementById('burned').innerHTML = rows.length
@@ -425,10 +440,12 @@ document.getElementById('speed').onchange=e=>{ S.speed=parseFloat(e.target.value
 document.getElementById('reset').onclick=()=>{ seed=42; AID=0; S.seenRings=new Set();
   document.getElementById('log').innerHTML=''; document.getElementById('day').textContent='0';
   document.getElementById('mind').textContent='"Waiting for pressure. Every lever you pull teaches me."';
+  document.getElementById('speed').value='1'; S.speed=1;
   genWorld(); render(); setTimeout(()=>network.fit(),100); };
 document.getElementById('th').oninput=e=>{ S.levers.th=+e.target.value; document.getElementById('th-val').textContent=S.levers.th.toFixed(2); };
 document.getElementById('u30').onchange=e=>{ S.levers.u30=e.target.checked; log('Day '+S.day+' LEVER: U30 '+(S.levers.u30?'ON':'OFF'),'cyan'); };
 document.getElementById('dpip').onchange=e=>{ S.levers.dpip=e.target.checked; log('Day '+S.day+' LEVER: DPIP '+(S.levers.dpip?'ON':'OFF'),'cyan'); };
+document.getElementById('coord').onchange=e=>{ S.levers.coord=e.target.checked; log('Day '+S.day+' LEVER: coordinator targeting '+(S.levers.coord?'ON':'OFF'),'cyan'); };
 document.getElementById('cov').oninput=e=>{ S.levers.cov=+e.target.value; document.getElementById('cov-val').textContent=Math.round(S.levers.cov*100)+'%'; };
 document.getElementById('xray').onchange=()=>render();
 document.getElementById('ab').onclick=runAB;
