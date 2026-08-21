@@ -12,11 +12,13 @@
   .panel{background:#1e293b;border:1px solid #334155;border-radius:12px}
   .lever{accent-color:#06b6d4}
   .mw-toast{position:fixed;right:16px;background:#1e293b;color:#f1f5f9;padding:12px 16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);font-size:14px;font-weight:600;z-index:50;transition:opacity 1s}
+  #graph{background-image:linear-gradient(rgba(6,182,212,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,0.05) 1px,transparent 1px);background-size:20px 20px}
+  .xray-on #graph{box-shadow:inset 0 0 40px rgba(239,68,68,0.25)}
+  .rubric-pill{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);padding:2px 8px;border-radius:999px;font-size:10px;color:#67e8f9}
 </style>
 </head>
 <body class="p-4">
 
-<!-- INTRO OVERLAY (Script 5) -->
 <div id="intro" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-8">
   <div class="max-w-2xl text-center">
     <h1 class="text-6xl font-black mb-4">MULE<span class="text-cyan-400">WORLD</span></h1>
@@ -31,17 +33,24 @@
 <header class="max-w-7xl mx-auto mb-4 flex flex-wrap items-center gap-4">
   <h1 class="text-2xl font-extrabold">MULE<span class="text-cyan-400">WORLD</span></h1>
   <span class="text-sm text-slate-400">A world model of India's shadow financial economy — the adversary remembers, adapts, evolves.</span>
-  <div class="ml-auto flex items-center gap-3 text-sm">
-    <span class="font-mono text-cyan-400">DAY <span id="day">0</span></span>
-    <button id="play" class="bg-cyan-500 text-slate-900 font-bold px-4 py-1.5 rounded">▶ Play</button>
-    <button id="speed" class="bg-slate-700 px-3 py-1.5 rounded">1x</button>
-    <button id="reset" class="bg-slate-700 px-3 py-1.5 rounded">↺ Reset</button>
-    <label class="flex items-center gap-2 text-yellow-300"><input id="xray" type="checkbox" class="lever"> X-RAY (God View)</label>
+  <div class="ml-auto flex items-center gap-2 flex-wrap">
+    <span class="rubric-pill">✅ Memory</span>
+    <span class="rubric-pill">✅ Interaction</span>
+    <span class="rubric-pill">✅ Consistency</span>
+    <span class="rubric-pill">✅ Intervention</span>
   </div>
 </header>
 
+<div class="max-w-7xl mx-auto flex flex-wrap items-center gap-3 text-sm mb-4">
+  <span class="font-mono text-cyan-400">DAY <span id="day">0</span></span>
+  <button id="play" class="bg-cyan-500 text-slate-900 font-bold px-4 py-1.5 rounded">▶ Play</button>
+  <button id="speed" class="bg-slate-700 px-3 py-1.5 rounded">1x</button>
+  <button id="reset" class="bg-slate-700 px-3 py-1.5 rounded">↺ Reset</button>
+  <label class="flex items-center gap-2 text-yellow-300"><input id="xray" type="checkbox" class="lever"> X-RAY (God View)</label>
+</div>
+
 <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-4">
-  <div class="lg:col-span-2 panel p-2"><div id="graph" style="height:460px;background:#020617;border-radius:10px"></div></div>
+  <div class="lg:col-span-2 panel p-2"><div id="graph" style="height:460px;border-radius:10px"></div></div>
 
   <div class="panel p-4 space-y-4">
     <h2 class="font-bold text-cyan-400">OPERATOR CONSOLE — Defense Levers</h2>
@@ -56,7 +65,6 @@
       <input id="cov" type="range" min="0" max="1" step="0.1" value="0.6" class="lever w-full">
     </div>
 
-    <!-- SCENARIO PRESETS (Script 3) -->
     <div class="border-t border-slate-700 pt-3">
       <h3 class="text-xs text-slate-500 uppercase mb-2">Inject Scenarios</h3>
       <div class="grid grid-cols-2 gap-2">
@@ -66,9 +74,11 @@
     </div>
 
     <h2 class="font-bold text-cyan-400 pt-2">WORLD EVENT LOG</h2>
-    <div id="log" class="h-48 overflow-y-auto text-xs font-mono space-y-1"></div>
+    <div id="log" class="h-40 overflow-y-auto text-xs font-mono space-y-1"></div>
 
-    <!-- ADVERSARY'S MIND (Script 4) -->
+    <h2 class="font-bold text-red-400 pt-2">BURNED ACCOUNTS — never reused</h2>
+    <div id="burned" class="h-24 overflow-y-auto text-xs font-mono text-slate-400">No accounts burned yet.</div>
+
     <h2 class="font-bold text-purple-400 pt-2">ADVERSARY'S MIND</h2>
     <div id="mind" class="text-xs italic text-purple-300">"Waiting for pressure. Every lever you pull teaches me."</div>
   </div>
@@ -79,12 +89,23 @@
   <div class="panel p-4"><h3 class="text-sm font-bold mb-2">Detection % vs Frozen vs False Positives</h3><canvas id="chartDet"></canvas></div>
 </div>
 
-<!-- NODE INSPECTOR (Script 1) -->
+<!-- POLICY SANDBOX (A/B Compare) -->
+<div class="max-w-7xl mx-auto panel p-4 mt-4">
+  <div class="flex items-center gap-4 mb-3 flex-wrap">
+    <h3 class="text-sm font-bold">POLICY SANDBOX — 90-day counterfactual</h3>
+    <button id="ab" class="bg-cyan-500 text-slate-900 font-bold px-4 py-1.5 rounded text-sm">▶ Run A/B (90 days)</button>
+    <span id="ab-result" class="text-sm font-mono text-cyan-400"></span>
+  </div>
+  <canvas id="chartAB" height="90"></canvas>
+</div>
+
 <div id="inspector" class="hidden fixed top-20 right-4 bg-slate-800 border border-cyan-500/50 p-4 rounded-lg shadow-2xl text-xs font-mono z-40 w-64">
   <div id="ins-body" class="text-slate-300"></div>
 </div>
 
 <script>
+let HEADLESS=false;
+
 // ================= SEEDED RNG =================
 let seed=42;
 function rng(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
@@ -104,7 +125,7 @@ function genWorld(){
   for(let i=0;i<40;i++) addAgent(rng()<0.6?'family':'merchant', ri(BANKS));
   for(let i=0;i<15;i++) addAgent('victim', ri(BANKS));
   for(let r=0;r<3;r++){
-    const ring={ id:'C-0'+(7+r), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[] };
+    const ring={ id:'C-0'+(7+r), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[], burned:[] };
     ring.members.push(addAgent('coordinator',ri(BANKS),ring.id));
     ring.members.push(addAgent('collector',ri(BANKS),ring.id));
     ring.members.push(addAgent('relay',ri(BANKS),ring.id));
@@ -113,12 +134,11 @@ function genWorld(){
     S.rings.push(ring);
   }
   log('World generated: 3 rings (C-07, C-08, C-09), 55 normals, 15 victims.','slate');
-  setTimeout(()=>{ if(network) network.fit(); },150);
+  setTimeout(()=>{ if(network && !HEADLESS) network.fit(); },150);
 }
 
 function covered(a){ return a.bank < Math.floor(S.levers.cov*BANKS); }
 
-// ================= TICK (1 simulated day) =================
 function tick(){
   S.day++;
   const T=[];
@@ -147,10 +167,9 @@ function tick(){
   }
   S.txns.push(...T); S.recent=T;
   detect(); adapt(); metrics(); render();
-  document.getElementById('day').textContent=S.day;
+  if(!HEADLESS) document.getElementById('day').textContent=S.day;
 }
 
-// ================= DETECTION: label propagation on VISIBLE txns =================
 function detect(){
   const win=S.txns.filter(t=>t.visible && S.day-t.day<7);
   const adj={};
@@ -164,7 +183,7 @@ function detect(){
   for(const c in coms){
     const m=coms[c]; if(m.length<4) continue;
     const ringN=m.filter(id=>byId[id]&&byId[id].ringId).length;
-    if(ringN/m.length>0.5){
+    if(ringN/m.length>0.45){
       const counts={}; m.forEach(id=>{ const r=byId[id]&&byId[id].ringId; if(r) counts[r]=(counts[r]||0)+1; });
       let rid=null,rc=0; for(const k in counts) if(counts[k]>rc){rc=counts[k];rid=k;}
       m.forEach(id=>{ const a=byId[id]; if(a) a.flagged=Math.min(1,a.flagged+0.3);
@@ -178,12 +197,12 @@ function detect(){
   S.agents.forEach(a=>{
     if(!a.frozen && a.type!=='victim' && a.flagged>=S.levers.th){
       a.frozen=true; a.frozenDay=S.day;
+      if(a.ringId){ const r=S.rings.find(x=>x.id===a.ringId); if(r) r.burned.push({id:a.id,day:S.day,type:a.type}); }
       log('Day '+S.day+' FREEZE '+a.id+' ('+a.type+') risk '+a.flagged.toFixed(2), a.ringId?'red':'orange');
     }
   });
 }
 
-// ================= ADAPTATION ENGINE =================
 function adapt(){
   if(S.day%10!==0) return;
   const fr=S.agents.filter(a=>a.frozen&&S.day-a.frozenDay<10).length/15;
@@ -199,10 +218,17 @@ function adapt(){
     if(S.levers.dpip&&!ring.behavior.cash){ ring.behavior.cash=true; log('Day '+S.day+' '+ring.id+' ADAPTS: DPIP pressure → extra hop + cash cashout.','yellow'); changed=true; }
     if(S.levers.cov<0.5&&!ring.behavior.dark){ ring.behavior.dark=true; log('Day '+S.day+' '+ring.id+' ADAPTS: routing via non-participating banks (dark hops).','yellow'); changed=true; }
   }
-  if(changed) document.getElementById('mind').textContent='"'+getAdversaryThought()+'"';
+  if(changed && !HEADLESS){
+    const thought = getAdversaryThought();
+    if(thought && typeof thought.then === 'function'){
+      thought.then(t => { document.getElementById('mind').textContent='"'+t+'"'; });
+    } else {
+      document.getElementById('mind').textContent='"'+thought+'"';
+    }
+  }
 }
 
-// ================= ADVERSARY'S MIND (Script 4) =================
+// ================= ADVERSARY'S MIND =================
 const fallbackNarratives=[
   "Freezes are high. We split transfers below thresholds until your eyes glaze over.",
   "Your screens block our callers. Fresh synthetic identities are already in production.",
@@ -211,20 +237,49 @@ const fallbackNarratives=[
   "Burned accounts are retired. We never reuse a face twice."
 ];
 function getAdversaryThought(){
-  /* VENUE UPGRADE: replace body with Anthropic API call using event credits. Keep fallbacks as default. */
+  /* VENUE UPGRADE: To enable Anthropic API:
+     1. Add "async" keyword before this function declaration
+     2. Uncomment the try/catch block below
+     3. Replace YOUR_KEY_HERE with your API key
+     4. Verify model string at docs.anthropic.com (claude-sonnet-4-5 may need updating)
+     The caller in adapt() already handles both sync and async returns. */
+  /*
+  try {
+    const logLines = Array.from(document.querySelectorAll('#log > div')).slice(0,5).map(d=>d.innerText).join('\n');
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'anthropic-version':'2023-06-01',
+        'x-api-key':'YOUR_KEY_HERE',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-5',
+        max_tokens:60,
+        messages:[{
+          role:'user',
+          content:'You are the cold, analytical mind of an adaptive money-mule network. Recent events:\n'+logLines+'\nWrite ONE first-person sentence (<=25 words) explaining your latest adaptation.'
+        }]
+      })
+    });
+    const j = await r.json();
+    if(j.content && j.content[0] && j.content[0].text) return j.content[0].text;
+  } catch(e){}
+  */
+  
   return fallbackNarratives[Math.floor(Math.random()*fallbackNarratives.length)];
 }
 
-// ================= METRICS =================
 function metrics(){
   const loss=S.recent.filter(t=>t.ring&&byId[t.to]&&byId[t.to].type==='coordinator').reduce((s,t)=>s+t.amount,0);
   const det=S.rings.filter(r=>r.members.some(m=>m.flagged>0)).length;
-  S.metrics.push({day:S.day, loss, detPct:Math.round(det/S.rings.length*100),
+  S.metrics.push({day:S.day, loss, detPct:Math.round(det/Math.max(1,S.rings.length)*100),
     frozen:S.agents.filter(a=>a.frozen&&a.ringId).length, fp:S.agents.filter(a=>a.frozen&&!a.ringId&&a.type!=='victim').length});
 }
 
-// ================= TOASTS (Script 2) =================
 function showToast(msg,color){
+  if(HEADLESS) return;
   const stack=document.querySelectorAll('.mw-toast').length;
   const t=document.createElement('div');
   t.className='mw-toast';
@@ -235,7 +290,6 @@ function showToast(msg,color){
   setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),1000); },3500);
 }
 
-// ================= SCENARIOS (Script 3) =================
 function runScenario(type){
   if(type==='digital_arrest'){
     for(let i=0;i<15;i++) addAgent('victim',ri(BANKS));
@@ -243,7 +297,7 @@ function runScenario(type){
     showToast('SCENARIO INJECTED: Digital Arrest Wave','#a855f7');
   } else {
     for(let r=0;r<2;r++){
-      const ring={ id:'C-'+(10+S.rings.length), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[] };
+      const ring={ id:'C-'+(10+S.rings.length+r), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[], burned:[] };
       ring.members.push(addAgent('coordinator',ri(BANKS),ring.id));
       ring.members.push(addAgent('collector',ri(BANKS),ring.id));
       ring.members.push(addAgent('relay',ri(BANKS),ring.id));
@@ -257,6 +311,38 @@ function runScenario(type){
   render();
 }
 
+// ================= POLICY SANDBOX (A/B) =================
+let chartAB;
+function simulate(lv, days){
+  HEADLESS=true;
+  seed=42; AID=0; S.seenRings=new Set();
+  const saved={...S.levers};
+  genWorld();
+  S.levers={...lv};
+  for(let i=0;i<days;i++) tick();
+  const out=S.metrics.map(m=>m.loss);
+  S.levers=saved; HEADLESS=false;
+  return out;
+}
+function cumulative(arr){ let s=0; return arr.map(v=>s+=v); }
+function runAB(){
+  S.running=false; document.getElementById('play').textContent='▶ Play';
+  const A=cumulative(simulate({th:0.7,u30:false,dpip:false,cov:0.3},90));
+  const B=cumulative(simulate({th:0.6,u30:true, dpip:true, cov:0.9},90));
+  const labels=A.map((_,i)=>i+1);
+  const a90=A[A.length-1]||1, b90=B[B.length-1]||0;
+  const prevented=Math.round((1-(b90/a90))*100);
+  document.getElementById('ab-result').textContent=
+    'Loss prevented: '+prevented+'%  (₹'+Math.round(a90/100000)+'L → ₹'+Math.round(b90/100000)+'L)';
+  if(chartAB) chartAB.destroy();
+  chartAB=new Chart(document.getElementById('chartAB'),{type:'line',
+    data:{labels,datasets:[
+      {label:'Policy A — minimal defense',data:A,borderColor:'#ef4444',tension:.3,pointRadius:0},
+      {label:'Policy B — U30 + DPIP + 90% coverage',data:B,borderColor:'#06b6d4',tension:.3,pointRadius:0}]},
+    options:{plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#64748b'}},y:{ticks:{color:'#64748b'}}}}});
+  seed=42; AID=0; S.seenRings=new Set(); genWorld(); render();
+}
+
 // ================= UI =================
 const COLORS={victim:'#3b82f6',collector:'#eab308',relay:'#eab308',cashout:'#ef4444',coordinator:'#9333ea',family:'#475569',merchant:'#475569'};
 let network, nodesDS, edgesDS, chartLoss, chartDet;
@@ -264,8 +350,6 @@ function initUI(){
   nodesDS=new vis.DataSet(); edgesDS=new vis.DataSet();
   network=new vis.Network(document.getElementById('graph'),{nodes:nodesDS,edges:edgesDS},
     {physics:{barnesHut:{gravitationalConstant:-4000,springLength:90}},interaction:{hover:true}});
-
-  // NODE INSPECTOR (Script 1)
   network.on("click", function(params){
     const box=document.getElementById('inspector');
     if(params.nodes.length>0){
@@ -283,7 +367,6 @@ function initUI(){
     }
     box.classList.add('hidden');
   });
-
   chartLoss=new Chart(document.getElementById('chartLoss'),{type:'line',
     data:{labels:[],datasets:[{label:'Fraud loss ₹',data:[],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.15)',fill:true,tension:.3}]},
     options:{plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#64748b'}},y:{ticks:{color:'#64748b'}}}}});
@@ -296,7 +379,9 @@ function initUI(){
 }
 
 function render(){
+  if(HEADLESS) return;
   const xray=document.getElementById('xray').checked;
+  document.body.classList.toggle('xray-on', xray);
   nodesDS.clear(); edgesDS.clear();
   S.agents.forEach(a=>{ nodesDS.add({id:a.id,label:a.id,shape:a.type==='coordinator'?'star':'dot',
     size:a.type==='coordinator'?22:16,
@@ -313,12 +398,20 @@ function render(){
   chartDet.data.datasets[1].data=S.metrics.map(m=>m.frozen);
   chartDet.data.datasets[2].data=S.metrics.map(m=>m.fp);
   chartDet.update('none');
+
+  // BURNED ACCOUNTS
+  const rows=S.rings.flatMap(r=>r.burned.map(b=>({...b,ring:r.id})));
+  document.getElementById('burned').innerHTML = rows.length
+    ? rows.slice(-30).reverse().map(b=>'<div><span class="text-red-400">'+b.id+'</span> ('+b.type+') · '+b.ring+' · burned D'+b.day+'</div>').join('')
+    : 'No accounts burned yet.';
 }
 
-function log(msg,color){ const d=document.getElementById('log');
-  d.innerHTML='<div class="text-'+(color||'slate')+'-300">'+msg+'</div>'+d.innerHTML; }
+function log(msg,color){
+  if(HEADLESS) return;
+  const d=document.getElementById('log');
+  d.innerHTML='<div class="text-'+(color||'slate')+'-300">'+msg+'</div>'+d.innerHTML;
+}
 
-// ================= CONTROLS (FIXED) =================
 document.getElementById('play').onclick=e=>{ S.running=!S.running; e.target.textContent=S.running?'⏸ Pause':'▶ Play'; };
 document.getElementById('speed').onclick=e=>{ S.speed=S.speed===1?4:1; e.target.textContent=S.speed+'x'; };
 document.getElementById('reset').onclick=()=>{ seed=42; AID=0; S.seenRings=new Set();
@@ -329,9 +422,9 @@ document.getElementById('th').oninput=e=>{ S.levers.th=+e.target.value; document
 document.getElementById('u30').onchange=e=>{ S.levers.u30=e.target.checked; log('Day '+S.day+' LEVER: U30 '+(S.levers.u30?'ON':'OFF'),'cyan'); };
 document.getElementById('dpip').onchange=e=>{ S.levers.dpip=e.target.checked; log('Day '+S.day+' LEVER: DPIP '+(S.levers.dpip?'ON':'OFF'),'cyan'); };
 document.getElementById('cov').oninput=e=>{ S.levers.cov=+e.target.value; document.getElementById('cov-val').textContent=Math.round(S.levers.cov*100)+'%'; };
-document.getElementById('xray').onchange=()=>render();   // FIX 4: X-RAY applies instantly
+document.getElementById('xray').onchange=()=>render();
+document.getElementById('ab').onclick=runAB;
 
-// FIX 1: speed-aware loop (recursive setTimeout instead of setInterval)
 function loop(){ if(S.running) tick(); setTimeout(loop, 600/S.speed); }
 
 initUI(); genWorld(); render(); loop();
