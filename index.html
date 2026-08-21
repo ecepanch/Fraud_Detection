@@ -11,9 +11,22 @@
   body{background:#0f172a;color:#f8fafc;font-family:Inter,system-ui,sans-serif}
   .panel{background:#1e293b;border:1px solid #334155;border-radius:12px}
   .lever{accent-color:#06b6d4}
+  .mw-toast{position:fixed;right:16px;background:#1e293b;color:#f1f5f9;padding:12px 16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);font-size:14px;font-weight:600;z-index:50;transition:opacity 1s}
 </style>
 </head>
 <body class="p-4">
+
+<!-- INTRO OVERLAY (Script 5) -->
+<div id="intro" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-8">
+  <div class="max-w-2xl text-center">
+    <h1 class="text-6xl font-black mb-4">MULE<span class="text-cyan-400">WORLD</span></h1>
+    <p class="text-xl text-slate-300 mb-6">A world model of India's shadow financial economy.</p>
+    <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">The adversary remembers, adapts, and evolves when you intervene. Pull the defense levers and watch the network fight back.</p>
+    <p class="text-xs text-slate-500 mb-8 uppercase tracking-widest">Track: Robotics & Simulation</p>
+    <button onclick="document.getElementById('intro').remove(); S.running=true; document.getElementById('play').textContent='⏸ Pause';"
+      class="bg-cyan-500 text-slate-900 font-bold px-8 py-3 rounded-lg text-xl hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">▶ START SIMULATION</button>
+  </div>
+</div>
 
 <header class="max-w-7xl mx-auto mb-4 flex flex-wrap items-center gap-4">
   <h1 class="text-2xl font-extrabold">MULE<span class="text-cyan-400">WORLD</span></h1>
@@ -42,19 +55,38 @@
       <label class="text-xs text-slate-400">Bank webhook coverage: <span id="cov-val">60%</span></label>
       <input id="cov" type="range" min="0" max="1" step="0.1" value="0.6" class="lever w-full">
     </div>
+
+    <!-- SCENARIO PRESETS (Script 3) -->
+    <div class="border-t border-slate-700 pt-3">
+      <h3 class="text-xs text-slate-500 uppercase mb-2">Inject Scenarios</h3>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="runScenario('digital_arrest')" class="bg-purple-600/20 border border-purple-500 text-purple-300 text-xs py-1.5 rounded hover:bg-purple-600/40">Digital Arrest Wave</button>
+        <button onclick="runScenario('synthetic_farm')" class="bg-yellow-600/20 border border-yellow-500 text-yellow-300 text-xs py-1.5 rounded hover:bg-yellow-600/40">Synthetic KYC Farm</button>
+      </div>
+    </div>
+
     <h2 class="font-bold text-cyan-400 pt-2">WORLD EVENT LOG</h2>
-    <div id="log" class="h-56 overflow-y-auto text-xs font-mono space-y-1"></div>
+    <div id="log" class="h-48 overflow-y-auto text-xs font-mono space-y-1"></div>
+
+    <!-- ADVERSARY'S MIND (Script 4) -->
+    <h2 class="font-bold text-purple-400 pt-2">ADVERSARY'S MIND</h2>
+    <div id="mind" class="text-xs italic text-purple-300">"Waiting for pressure. Every lever you pull teaches me."</div>
   </div>
 </div>
 
 <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-4 mt-4">
   <div class="panel p-4"><h3 class="text-sm font-bold mb-2">Daily Fraud Loss (₹) reaching coordinators</h3><canvas id="chartLoss"></canvas></div>
-  <div class="panel p-4"><h3 class="text-sm font-bold mb-2">Detection rate % vs Frozen accounts</h3><canvas id="chartDet"></canvas></div>
+  <div class="panel p-4"><h3 class="text-sm font-bold mb-2">Detection % vs Frozen vs False Positives</h3><canvas id="chartDet"></canvas></div>
+</div>
+
+<!-- NODE INSPECTOR (Script 1) -->
+<div id="inspector" class="hidden fixed top-20 right-4 bg-slate-800 border border-cyan-500/50 p-4 rounded-lg shadow-2xl text-xs font-mono z-40 w-64">
+  <div id="ins-body" class="text-slate-300"></div>
 </div>
 
 <script>
 // ================= SEEDED RNG =================
-let seed = 42;
+let seed=42;
 function rng(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
 function ri(n){ return Math.floor(rng()*n); }
 
@@ -62,7 +94,7 @@ function ri(n){ return Math.floor(rng()*n); }
 const BANKS=10, byId={};
 let AID=0;
 const S={ day:0, agents:[], txns:[], recent:[], rings:[], metrics:[], running:false, speed:1,
-  levers:{ th:0.7, u30:false, dpip:false, cov:0.6 } };
+  levers:{ th:0.7, u30:false, dpip:false, cov:0.6 }, seenRings:new Set() };
 
 function addAgent(type,bank,ringId){ const a={id:'A'+(AID++),type,bank,ringId:ringId||null,frozen:false,frozenDay:0,flagged:0}; S.agents.push(a); byId[a.id]=a; return a; }
 
@@ -81,6 +113,7 @@ function genWorld(){
     S.rings.push(ring);
   }
   log('World generated: 3 rings (C-07, C-08, C-09), 55 normals, 15 victims.','slate');
+  setTimeout(()=>{ if(network) network.fit(); },150);
 }
 
 function covered(a){ return a.bank < Math.floor(S.levers.cov*BANKS); }
@@ -132,8 +165,14 @@ function detect(){
     const m=coms[c]; if(m.length<4) continue;
     const ringN=m.filter(id=>byId[id]&&byId[id].ringId).length;
     if(ringN/m.length>0.5){
+      const counts={}; m.forEach(id=>{ const r=byId[id]&&byId[id].ringId; if(r) counts[r]=(counts[r]||0)+1; });
+      let rid=null,rc=0; for(const k in counts) if(counts[k]>rc){rc=counts[k];rid=k;}
       m.forEach(id=>{ const a=byId[id]; if(a) a.flagged=Math.min(1,a.flagged+0.3);
-        if(S.levers.dpip&&a&&a.ringId) a.flagged=1; });   // DPIP = instant seeds
+        if(S.levers.dpip&&a&&a.ringId) a.flagged=1; });
+      if(rid && !S.seenRings.has(rid)){ S.seenRings.add(rid);
+        log('Day '+S.day+' RING DETECTED: '+rid+' ('+m.length+' nodes, density '+(ringN/m.length).toFixed(2)+')','red');
+        showToast('RING DETECTED: '+rid+' — '+m.length+' linked accounts','#ef4444');
+      }
     }
   }
   S.agents.forEach(a=>{
@@ -144,29 +183,78 @@ function detect(){
   });
 }
 
-// ================= ADAPTATION ENGINE (the world fights back) =================
+// ================= ADAPTATION ENGINE =================
 function adapt(){
   if(S.day%10!==0) return;
   const fr=S.agents.filter(a=>a.frozen&&S.day-a.frozenDay<10).length/15;
+  let changed=false;
   for(const ring of S.rings){
     if(ring.members.filter(m=>!m.frozen).length<3){
-      const nr=addAgent('relay',ri(BANKS),ring.id); ring.members.push(nr);
+      ring.members.push(addAgent('relay',ri(BANKS),ring.id));
       log('Day '+S.day+' '+ring.id+' recruited NEW mule — burned accounts remembered, never reused.','purple');
+      changed=true;
     }
-    if(fr>0.3&&!ring.behavior.structuring){ ring.behavior.structuring=true; log('Day '+S.day+' '+ring.id+' ADAPTS: splitting amounts below reporting threshold.','yellow'); }
-    if(S.levers.u30&&!ring.behavior.synthetic){ ring.behavior.synthetic=true; log('Day '+S.day+' '+ring.id+' ADAPTS: U30 pressure → synthetic-KYC recruitment.','yellow'); }
-    if(S.levers.dpip&&!ring.behavior.cash){ ring.behavior.cash=true; log('Day '+S.day+' '+ring.id+' ADAPTS: DPIP pressure → extra hop + cash cashout.','yellow'); }
-    if(S.levers.cov<0.5&&!ring.behavior.dark){ ring.behavior.dark=true; log('Day '+S.day+' '+ring.id+' ADAPTS: routing via non-participating banks (dark hops).','yellow'); }
+    if(fr>0.3&&!ring.behavior.structuring){ ring.behavior.structuring=true; log('Day '+S.day+' '+ring.id+' ADAPTS: splitting amounts below reporting threshold.','yellow'); changed=true; }
+    if(S.levers.u30&&!ring.behavior.synthetic){ ring.behavior.synthetic=true; log('Day '+S.day+' '+ring.id+' ADAPTS: U30 pressure → synthetic-KYC recruitment.','yellow'); changed=true; }
+    if(S.levers.dpip&&!ring.behavior.cash){ ring.behavior.cash=true; log('Day '+S.day+' '+ring.id+' ADAPTS: DPIP pressure → extra hop + cash cashout.','yellow'); changed=true; }
+    if(S.levers.cov<0.5&&!ring.behavior.dark){ ring.behavior.dark=true; log('Day '+S.day+' '+ring.id+' ADAPTS: routing via non-participating banks (dark hops).','yellow'); changed=true; }
   }
-  // EXTEND TOMORROW: call narrative layer here (Claude) with last 10 log lines.
+  if(changed) document.getElementById('mind').textContent='"'+getAdversaryThought()+'"';
+}
+
+// ================= ADVERSARY'S MIND (Script 4) =================
+const fallbackNarratives=[
+  "Freezes are high. We split transfers below thresholds until your eyes glaze over.",
+  "Your screens block our callers. Fresh synthetic identities are already in production.",
+  "DPIP sees our cashouts. We add a hop and let cash do the talking.",
+  "Half the banks are blind to us. We route where your webhooks don't reach.",
+  "Burned accounts are retired. We never reuse a face twice."
+];
+function getAdversaryThought(){
+  /* VENUE UPGRADE: replace body with Anthropic API call using event credits. Keep fallbacks as default. */
+  return fallbackNarratives[Math.floor(Math.random()*fallbackNarratives.length)];
 }
 
 // ================= METRICS =================
 function metrics(){
-  const loss=S.recent.filter(t=>t.ring&&byId[t.to].type==='coordinator').reduce((s,t)=>s+t.amount,0);
+  const loss=S.recent.filter(t=>t.ring&&byId[t.to]&&byId[t.to].type==='coordinator').reduce((s,t)=>s+t.amount,0);
   const det=S.rings.filter(r=>r.members.some(m=>m.flagged>0)).length;
   S.metrics.push({day:S.day, loss, detPct:Math.round(det/S.rings.length*100),
     frozen:S.agents.filter(a=>a.frozen&&a.ringId).length, fp:S.agents.filter(a=>a.frozen&&!a.ringId&&a.type!=='victim').length});
+}
+
+// ================= TOASTS (Script 2) =================
+function showToast(msg,color){
+  const stack=document.querySelectorAll('.mw-toast').length;
+  const t=document.createElement('div');
+  t.className='mw-toast';
+  t.style.borderLeft='4px solid '+color;
+  t.style.top=(16+stack*64)+'px';
+  t.innerText=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),1000); },3500);
+}
+
+// ================= SCENARIOS (Script 3) =================
+function runScenario(type){
+  if(type==='digital_arrest'){
+    for(let i=0;i<15;i++) addAgent('victim',ri(BANKS));
+    log('Day '+S.day+' SCENARIO: Digital Arrest Wave — 15 new victims injected.','purple');
+    showToast('SCENARIO INJECTED: Digital Arrest Wave','#a855f7');
+  } else {
+    for(let r=0;r<2;r++){
+      const ring={ id:'C-'+(10+S.rings.length), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[] };
+      ring.members.push(addAgent('coordinator',ri(BANKS),ring.id));
+      ring.members.push(addAgent('collector',ri(BANKS),ring.id));
+      ring.members.push(addAgent('relay',ri(BANKS),ring.id));
+      ring.members.push(addAgent('relay',ri(BANKS),ring.id));
+      ring.members.push(addAgent('cashout',ri(BANKS),ring.id));
+      S.rings.push(ring);
+    }
+    log('Day '+S.day+' SCENARIO: Synthetic KYC Farm — 2 new rings spawned.','yellow');
+    showToast('SCENARIO INJECTED: Synthetic KYC Farm','#eab308');
+  }
+  render();
 }
 
 // ================= UI =================
@@ -176,6 +264,26 @@ function initUI(){
   nodesDS=new vis.DataSet(); edgesDS=new vis.DataSet();
   network=new vis.Network(document.getElementById('graph'),{nodes:nodesDS,edges:edgesDS},
     {physics:{barnesHut:{gravitationalConstant:-4000,springLength:90}},interaction:{hover:true}});
+
+  // NODE INSPECTOR (Script 1)
+  network.on("click", function(params){
+    const box=document.getElementById('inspector');
+    if(params.nodes.length>0){
+      const a=byId[params.nodes[0]];
+      if(a){
+        box.classList.remove('hidden');
+        document.getElementById('ins-body').innerHTML=
+          '<div class="text-cyan-400 font-bold mb-1">'+a.id+' ('+a.type+')</div>'+
+          '<div>Bank Node: '+a.bank+'</div>'+
+          '<div>Ring ID: <span class="'+(a.ringId?'text-red-400':'text-slate-400')+'">'+(a.ringId||'None')+'</span></div>'+
+          '<div>Risk Score: '+a.flagged.toFixed(2)+'</div>'+
+          '<div>Status: '+(a.frozen?'<span class="text-red-500">FROZEN (Day '+a.frozenDay+')</span>':'Active')+'</div>';
+        return;
+      }
+    }
+    box.classList.add('hidden');
+  });
+
   chartLoss=new Chart(document.getElementById('chartLoss'),{type:'line',
     data:{labels:[],datasets:[{label:'Fraud loss ₹',data:[],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.15)',fill:true,tension:.3}]},
     options:{plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#64748b'}},y:{ticks:{color:'#64748b'}}}}});
@@ -186,13 +294,14 @@ function initUI(){
       {label:'False positives',data:[],borderColor:'#f97316',tension:.3}]},
     options:{plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#64748b'}},y:{ticks:{color:'#64748b'}}}}});
 }
+
 function render(){
   const xray=document.getElementById('xray').checked;
   nodesDS.clear(); edgesDS.clear();
   S.agents.forEach(a=>{ nodesDS.add({id:a.id,label:a.id,shape:a.type==='coordinator'?'star':'dot',
-    size:a.type==='coordinator'?22:12,
+    size:a.type==='coordinator'?22:16,
     color:{background:a.frozen?'#334155':COLORS[a.type],border:a.flagged>=S.levers.th?'#ef4444':'#0f172a'},
-    font:{color:'#94a3b8',size:9}}); });
+    font:{color:'#94a3b8',size:11}}); });
   S.recent.forEach(t=>{
     if(t.visible||xray) edgesDS.add({from:t.from,to:t.to,arrows:'to',
       dashes:(!t.visible&&xray), color:{color:t.visible?'#334155':'#b91c1c'}, width:t.ring?2:1});
@@ -205,20 +314,27 @@ function render(){
   chartDet.data.datasets[2].data=S.metrics.map(m=>m.fp);
   chartDet.update('none');
 }
+
 function log(msg,color){ const d=document.getElementById('log');
   d.innerHTML='<div class="text-'+(color||'slate')+'-300">'+msg+'</div>'+d.innerHTML; }
 
-// ================= CONTROLS =================
+// ================= CONTROLS (FIXED) =================
 document.getElementById('play').onclick=e=>{ S.running=!S.running; e.target.textContent=S.running?'⏸ Pause':'▶ Play'; };
 document.getElementById('speed').onclick=e=>{ S.speed=S.speed===1?4:1; e.target.textContent=S.speed+'x'; };
-document.getElementById('reset').onclick=()=>{ genWorld(); render(); };
+document.getElementById('reset').onclick=()=>{ seed=42; AID=0; S.seenRings=new Set();
+  document.getElementById('log').innerHTML=''; document.getElementById('day').textContent='0';
+  document.getElementById('mind').textContent='"Waiting for pressure. Every lever you pull teaches me."';
+  genWorld(); render(); setTimeout(()=>network.fit(),100); };
 document.getElementById('th').oninput=e=>{ S.levers.th=+e.target.value; document.getElementById('th-val').textContent=S.levers.th.toFixed(2); };
 document.getElementById('u30').onchange=e=>{ S.levers.u30=e.target.checked; log('Day '+S.day+' LEVER: U30 '+(S.levers.u30?'ON':'OFF'),'cyan'); };
 document.getElementById('dpip').onchange=e=>{ S.levers.dpip=e.target.checked; log('Day '+S.day+' LEVER: DPIP '+(S.levers.dpip?'ON':'OFF'),'cyan'); };
 document.getElementById('cov').oninput=e=>{ S.levers.cov=+e.target.value; document.getElementById('cov-val').textContent=Math.round(S.levers.cov*100)+'%'; };
+document.getElementById('xray').onchange=()=>render();   // FIX 4: X-RAY applies instantly
 
-initUI(); genWorld(); render();
-setInterval(()=>{ if(S.running) tick(); }, 600/S.speed);
+// FIX 1: speed-aware loop (recursive setTimeout instead of setInterval)
+function loop(){ if(S.running) tick(); setTimeout(loop, 600/S.speed); }
+
+initUI(); genWorld(); render(); loop();
 </script>
 </body>
 </html>
