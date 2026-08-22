@@ -15,6 +15,8 @@
   #graph{background-image:linear-gradient(rgba(6,182,212,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(6,182,212,0.05) 1px,transparent 1px);background-size:20px 20px}
   .xray-on #graph{box-shadow:inset 0 0 40px rgba(239,68,68,0.25)}
   .rubric-pill{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);padding:2px 8px;border-radius:999px;font-size:10px;color:#67e8f9}
+  .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  .bank-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-right:6px}
 </style>
 </head>
 <body class="p-4">
@@ -23,9 +25,9 @@
   <div class="max-w-2xl text-center">
     <h1 class="text-6xl font-black mb-4">MULE<span class="text-cyan-400">WORLD</span></h1>
     <p class="text-xl text-slate-300 mb-6">A world model of India's shadow financial economy.</p>
-    <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">The adversary remembers, adapts, and evolves when you intervene. Pull the defense levers and watch the network fight back.</p>
+    <p class="text-sm text-slate-400 mb-8 max-w-md mx-auto">Synthetic accounts modelled on documented Indian mule typologies. Pull the defense levers and watch the network fight back.</p>
     <p class="text-xs text-slate-500 mb-8 uppercase tracking-widest">Track: Robotics & Simulation</p>
-    <button onclick="document.getElementById('intro').remove(); S.running=true; document.getElementById('play').textContent=' Pause';"
+    <button onclick="document.getElementById('intro').remove(); S.running=true; document.getElementById('play').textContent='⏸ Pause';"
       class="bg-cyan-500 text-slate-900 font-bold px-8 py-3 rounded-lg text-xl hover:bg-cyan-400 transition shadow-lg shadow-cyan-500/20">▶ START SIMULATION</button>
   </div>
 </div>
@@ -61,7 +63,15 @@
 </div>
 
 <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-4">
-  <div class="lg:col-span-2 panel p-2"><div id="graph" style="height:460px;border-radius:10px"></div></div>
+  <div class="lg:col-span-2 panel p-2">
+    <div class="flex flex-wrap gap-2 p-2 border-b border-slate-700 text-xs">
+      <span class="bank-pill" style="background:rgba(59,130,246,0.15);color:#93c5fd"><span class="legend-dot" style="background:#3b82f6"></span>HDFC — Mumbai/Pune</span>
+      <span class="bank-pill" style="background:rgba(234,179,8,0.15);color:#fde68a"><span class="legend-dot" style="background:#eab308"></span>SBI — Patna/Ranchi/Solapur</span>
+      <span class="bank-pill" style="background:rgba(239,68,68,0.15);color:#fca5a5"><span class="legend-dot" style="background:#ef4444"></span>PNB — Delhi (non-participating)</span>
+      <span class="bank-pill" style="background:rgba(147,51,234,0.15);color:#d8b4fe"><span class="legend-dot" style="background:#9333ea"></span>★ Coordinator</span>
+    </div>
+    <div id="graph" style="height:430px;border-radius:10px"></div>
+  </div>
 
   <div class="panel p-4 space-y-4">
     <h2 class="font-bold text-cyan-400">OPERATOR CONSOLE — Defense Levers</h2>
@@ -73,8 +83,8 @@
     <label class="flex items-center gap-2 text-sm"><input id="dpip" type="checkbox" class="lever"> DPIP Regulatory Feed (instant seeds)</label>
     <label class="flex items-center gap-2 text-sm"><input id="coord" type="checkbox" class="lever"> 🎯 Coordinator targeting (decapitation)</label>
     <div>
-      <label class="text-xs text-slate-400">Bank webhook coverage: <span id="cov-val">60%</span></label>
-      <input id="cov" type="range" min="0" max="1" step="0.1" value="0.6" class="lever w-full">
+      <label class="text-xs text-slate-400">Bank webhook coverage: <span id="cov-val">90%</span></label>
+      <input id="cov" type="range" min="0" max="1" step="0.1" value="0.9" class="lever w-full">
     </div>
 
     <div class="border-t border-slate-700 pt-3">
@@ -104,7 +114,6 @@
   <div class="panel p-4"><h3 class="text-sm font-bold mb-2">Detection % vs Frozen vs False Positives</h3><canvas id="chartDet"></canvas></div>
 </div>
 
-<!-- POLICY SANDBOX (A/B Compare) -->
 <div class="max-w-7xl mx-auto panel p-4 mt-4">
   <div class="flex items-center gap-4 mb-3 flex-wrap">
     <h3 class="text-sm font-bold">POLICY SANDBOX — 90-day counterfactual</h3>
@@ -114,52 +123,131 @@
   <canvas id="chartAB" height="90"></canvas>
 </div>
 
-<div id="inspector" class="hidden fixed top-20 right-4 bg-slate-800 border border-cyan-500/50 p-4 rounded-lg shadow-2xl text-xs font-mono z-40 w-64">
+<div id="inspector" class="hidden fixed top-20 right-4 bg-slate-800 border border-cyan-500/50 p-4 rounded-lg shadow-2xl text-xs font-mono z-40 w-80">
   <div id="ins-body" class="text-slate-300"></div>
 </div>
 
 <script>
 let HEADLESS=false;
 
-// ================= SEEDED RNG =================
+const BANKS_DATA = {
+  0: { name:'HDFC Bank', short:'HDFC', ifsc:'HDFC0001234', city:'Mumbai', color:'#3b82f6', participating:true },
+  1: { name:'SBI',       short:'SBI',  ifsc:'SBIN0005678', city:'Patna',  color:'#eab308', participating:true },
+  2: { name:'PNB',       short:'PNB',  ifsc:'PUNB0009999', city:'Delhi',  color:'#ef4444', participating:false }
+};
+const BANKS=3, byId={};
+
 let seed=42;
 function rng(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
 function ri(n){ return Math.floor(rng()*n); }
 
-// ================= WORLD STATE =================
-const BANKS=10, byId={};
-let AID=0;
 const S={ day:0, agents:[], txns:[], recent:[], rings:[], metrics:[], running:false, speed:1,
-  levers:{ th:0.7, u30:false, dpip:false, cov:0.6, coord:false }, seenRings:new Set() };
+  levers:{ th:0.7, u30:false, dpip:false, cov:0.9, coord:false }, seenRings:new Set() };
 
-function addAgent(type,bank,ringId){ const a={id:'A'+(AID++),type,bank,ringId:ringId||null,frozen:false,frozenDay:0,flagged:0}; S.agents.push(a); byId[a.id]=a; return a; }
+let NEXT_NUM={};
+const ID_PREFIX={collector:'C-PAT-',relay:'Y-RAN-',cashout:'X-SOL-',coordinator:'R-DEL-',victim:'V-MUM-'};
+const ID_REGION={collector:'Patna, BR',relay:'Ranchi, JH',cashout:'Solapur, MH',coordinator:'Delhi',victim:'Mumbai, MH'};
+function resetIdCounters(){ NEXT_NUM={collector:900,relay:900,cashout:900,coordinator:900,victim:900}; }
+function nextId(role){ return ID_PREFIX[role]+String(NEXT_NUM[role]++).padStart(3,'0'); }
+
+const SEED_ACCOUNTS = [
+  ['V-MUM-001','victim',0,'Account Holder A','Mumbai, MH','103.45.67.89','Verified'],
+  ['V-MUM-002','victim',0,'Account Holder B','Mumbai, MH','103.45.67.102','Verified'],
+  ['V-MUM-003','victim',0,'Account Holder C','Mumbai, MH','103.45.68.15','Verified'],
+  ['V-MUM-004','victim',0,'Account Holder D','Mumbai, MH','103.45.70.22','Verified'],
+  ['V-MUM-005','victim',0,'Account Holder E','Mumbai, MH','103.45.70.31','Verified'],
+  ['V-PUN-001','victim',0,'Account Holder F','Pune, MH','103.45.69.44','Verified'],
+  ['V-PUN-002','victim',0,'Account Holder G','Pune, MH','103.45.69.57','Verified'],
+  ['V-PUN-003','victim',0,'Account Holder H','Pune, MH','103.45.69.63','Verified'],
+  ['F-MUM-001','family',0,'Family Account 1','Mumbai, MH','103.45.71.10','Verified'],
+  ['F-MUM-002','family',0,'Family Account 2','Mumbai, MH','103.45.71.33','Verified'],
+  ['F-MUM-003','family',0,'Family Account 3','Mumbai, MH','103.45.71.48','Verified'],
+  ['F-MUM-004','family',0,'Family Account 4','Mumbai, MH','103.45.71.59','Verified'],
+  ['F-PUN-001','family',0,'Family Account 5','Pune, MH','103.45.73.12','Verified'],
+  ['M-MUM-001','merchant',0,'Merchant Account 1','Mumbai, MH','103.45.72.5','Verified'],
+  ['M-PUN-001','merchant',0,'Merchant Account 2','Pune, MH','103.45.74.9','Verified'],
+  ['F-PAT-001','family',1,'Family Account 6','Patna, BR','103.47.12.21','Verified'],
+  ['F-PAT-002','family',1,'Family Account 7','Patna, BR','103.47.12.35','Verified'],
+  ['F-RAN-001','family',1,'Family Account 8','Ranchi, JH','103.47.15.8','Verified'],
+  ['F-SOL-001','family',1,'Family Account 9','Solapur, MH','103.47.18.42','Verified'],
+  ['M-PAT-001','merchant',1,'Merchant Account 3','Patna, BR','103.47.22.14','Verified'],
+  ['M-RAN-001','merchant',1,'Merchant Account 4','Ranchi, JH','103.47.24.3','Verified'],
+  ['F-DEL-001','family',2,'Family Account 10','Delhi','103.46.12.88','Verified'],
+  ['F-DEL-002','family',2,'Family Account 11','Delhi','103.46.12.94','Verified'],
+  ['F-NOI-001','family',2,'Family Account 12','Noida, UP','103.46.15.27','Verified'],
+  ['M-DEL-001','merchant',2,'Merchant Account 5','Delhi','103.46.20.11','Verified'],
+  ['M-DEL-002','merchant',2,'Merchant Account 6','Delhi','103.46.20.19','Verified'],
+  ['R-DEL-001','coordinator',2,'Network Controller 1','Delhi','45.112.34.21','Verified'],
+  ['C-PAT-001','collector',1,'Collection Agent 1','Patna, BR','103.47.88.12','Verified'],
+  ['Y-RAN-001','relay',1,'Relay Node 1','Ranchi, JH','103.47.91.5','Verified'],
+  ['Y-RAN-002','relay',1,'Relay Node 2','Ranchi, JH','103.47.91.22','Verified'],
+  ['X-SOL-001','cashout',1,'Cashout Agent 1','Solapur, MH','103.47.95.88','Verified'],
+  ['R-DEL-002','coordinator',2,'Network Controller 2','Delhi','45.112.35.10','Verified'],
+  ['C-PAT-002','collector',1,'Collection Agent 2','Patna, BR','103.47.102.7','Verified'],
+  ['Y-RAN-003','relay',1,'Relay Node 3','Jamshedpur, JH','103.47.105.14','Verified'],
+  ['Y-RAN-004','relay',1,'Relay Node 4','Bokaro, JH','103.47.106.3','Verified'],
+  ['X-SOL-002','cashout',1,'Cashout Agent 2','Nagpur, MH','103.47.110.77','Verified'],
+  ['R-DEL-003','coordinator',2,'Network Controller 3','Noida, UP','45.113.10.55','Verified'],
+  ['C-PAT-003','collector',1,'Collection Agent 3','Lucknow, UP','103.48.20.11','Pending'],
+  ['Y-RAN-005','relay',1,'Relay Node 5','Prayagraj, UP','103.48.22.8','Pending'],
+  ['Y-RAN-006','relay',1,'Relay Node 6','Prayagraj, UP','103.48.22.19','Pending'],
+  ['X-SOL-003','cashout',1,'Cashout Agent 3','Indore, MP','103.48.30.44','Verified']
+];
+
+function addAgentFromSeed(s, ringId){
+  const a={ id:s[0], type:s[1], bank:s[2], name:s[3], region:s[4], ip:s[5], kyc:s[6],
+    ringId:ringId||null, frozen:false, frozenDay:0, flagged:0 };
+  S.agents.push(a); byId[a.id]=a; return a;
+}
+
+function addNewAgent(type,bank,name,region,ip,kyc,ringId){
+  const a={ id:nextId(type), type:type, bank:bank, name:name, region:region, ip:ip, kyc:kyc,
+    ringId:ringId||null, frozen:false, frozenDay:0, flagged:0 };
+  S.agents.push(a); byId[a.id]=a; return a;
+}
+
+function makeRecruit(role,ringId){
+  return addNewAgent(role,1,role.charAt(0).toUpperCase()+role.slice(1)+' (recruit)',ID_REGION[role],
+    '103.47.'+Math.floor(rng()*255)+'.'+Math.floor(rng()*255),'Pending',ringId);
+}
 
 function genWorld(){
   S.agents.length=0; S.txns.length=0; S.rings.length=0; S.metrics.length=0; S.recent.length=0; S.day=0;
   for(const k in byId) delete byId[k];
-  for(let i=0;i<40;i++) addAgent(rng()<0.6?'family':'merchant', ri(BANKS));
-  for(let i=0;i<15;i++) addAgent('victim', ri(BANKS));
-  for(let r=0;r<3;r++){
-    const ring={ id:'C-0'+(7+r), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[], burned:[] };
-    ring.members.push(addAgent('coordinator',ri(BANKS),ring.id));
-    ring.members.push(addAgent('collector',ri(BANKS),ring.id));
-    ring.members.push(addAgent('relay',ri(BANKS),ring.id));
-    ring.members.push(addAgent('relay',ri(BANKS),ring.id));
-    ring.members.push(addAgent('cashout',ri(BANKS),ring.id));
-    S.rings.push(ring);
-  }
-  log('World generated: 3 rings (C-07, C-08, C-09), 55 normals, 15 victims.','slate');
+  resetIdCounters();
+
+  SEED_ACCOUNTS.forEach(s=>{
+    let ringId=null;
+    const id=s[0];
+    if(['R-DEL-001','C-PAT-001','Y-RAN-001','Y-RAN-002','X-SOL-001'].includes(id)) ringId='C-07';
+    else if(['R-DEL-002','C-PAT-002','Y-RAN-003','Y-RAN-004','X-SOL-002'].includes(id)) ringId='C-08';
+    else if(['R-DEL-003','C-PAT-003','Y-RAN-005','Y-RAN-006','X-SOL-003'].includes(id)) ringId='C-09';
+    addAgentFromSeed(s, ringId);
+  });
+
+  ['C-07','C-08','C-09'].forEach(ringId=>{
+    S.rings.push({ id:ringId, behavior:{structuring:false,synthetic:false,cash:false,dark:false},
+      members:S.agents.filter(a=>a.ringId===ringId), burned:[] });
+  });
+
+  log('World generated: 3 rings · 8 victims · 18 normal accounts · 41 total. Synthetic data, documented mule typologies.','slate');
   setTimeout(()=>{ if(network && !HEADLESS) network.fit(); },150);
 }
 
-function covered(a){ return a.bank < Math.floor(S.levers.cov*BANKS); }
+function covered(a){
+  const m=BANKS_DATA[a.bank];
+  if(!m.participating) return false;
+  return S.levers.cov>=0.5;
+}
 
 function tick(){
   S.day++;
   const T=[];
   const normals=S.agents.filter(a=>a.type==='family'||a.type==='merchant');
-  for(let i=0;i<25;i++){ const a=normals[ri(normals.length)], b=normals[ri(normals.length)];
-    if(a!==b) T.push({day:S.day,from:a.id,to:b.id,amount:500+rng()*9500,ring:null,visible:true}); }
+  for(let i=0;i<30;i++){
+    const a=normals[ri(normals.length)], b=normals[ri(normals.length)];
+    if(a!==b) T.push({day:S.day,from:a.id,to:b.id,amount:500+rng()*9500,ring:null,visible:true});
+  }
 
   for(const ring of S.rings){
     if(rng()>=0.8) continue;
@@ -201,7 +289,7 @@ function detect(){
     if(ringN/m.length>0.45){
       const counts={}; m.forEach(id=>{ const r=byId[id]&&byId[id].ringId; if(r) counts[r]=(counts[r]||0)+1; });
       let rid=null,rc=0; for(const k in counts) if(counts[k]>rc){rc=counts[k];rid=k;}
-      m.forEach(id=>{ const a=byId[id]; if(a) a.flagged=Math.min(1,a.flagged+0.3);
+      m.forEach(id=>{ const a=byId[id]; if(a) a.flagged=Math.min(1,a.flagged+0.2);
         if(S.levers.dpip&&a&&a.ringId) a.flagged=1; });
       if(rid && !S.seenRings.has(rid)){ S.seenRings.add(rid);
         log('Day '+S.day+' RING DETECTED: '+rid+' ('+m.length+' nodes, density '+(ringN/m.length).toFixed(2)+')','red');
@@ -209,7 +297,6 @@ function detect(){
       }
     }
   }
-  // Coordinator targeting: graph trace to find boss
   if(S.levers.coord){
     S.rings.forEach(r=>{
       const known=r.members.filter(m=>m.flagged>0.2).length;
@@ -223,7 +310,7 @@ function detect(){
     if(!a.frozen && a.type!=='victim' && (a.flagged>=S.levers.th||coordHit)){
       a.frozen=true; a.frozenDay=S.day;
       if(a.ringId){ const r=S.rings.find(x=>x.id===a.ringId); if(r) r.burned.push({id:a.id,day:S.day,type:a.type}); }
-      log('Day '+S.day+' FREEZE '+a.id+' ('+a.type+') risk '+a.flagged.toFixed(2), a.ringId?'red':'orange');
+      log('Day '+S.day+' FREEZE '+a.id+' ('+a.type+') — '+a.region, a.ringId?'red':'orange');
     }
   });
 }
@@ -233,17 +320,16 @@ function adapt(){
   const fr=S.agents.filter(a=>a.frozen&&S.day-a.frozenDay<10).length/15;
   let changed=false;
   for(const ring of S.rings){
-    // Role-aware recruitment
     [['collector',1],['cashout',1],['relay',2]].forEach(function(rc){
       const role=rc[0], need=rc[1];
       const active=ring.members.filter(m=>m.type===role&&!m.frozen).length;
       if(active<need){
-        ring.members.push(addAgent(role,ri(BANKS),ring.id));
-        log('Day '+S.day+' '+ring.id+' recruited NEW '+role+' — burned accounts remembered, never reused.','purple');
+        const nm=makeRecruit(role,ring.id);
+        ring.members.push(nm);
+        log('Day '+S.day+' '+ring.id+' recruited NEW '+role+' '+nm.id+' — never reuses burned accounts.','purple');
         changed=true;
       }
     });
-    // Coordinator targeting: promote relay if coordinator frozen
     if(S.levers.coord){
       const activeCoord=ring.members.find(m=>m.type==='coordinator'&&!m.frozen);
       if(!activeCoord){
@@ -256,28 +342,26 @@ function adapt(){
         }
       }
     }
-    // Adaptations
     if(fr>0.3&&!ring.behavior.structuring){ ring.behavior.structuring=true; log('Day '+S.day+' '+ring.id+' ADAPTS: splitting amounts below reporting threshold.','yellow'); changed=true; }
     if(S.levers.u30&&!ring.behavior.synthetic){ ring.behavior.synthetic=true; log('Day '+S.day+' '+ring.id+' ADAPTS: U30 pressure → synthetic-KYC recruitment.','yellow'); changed=true; }
     if(S.levers.dpip&&!ring.behavior.cash){ ring.behavior.cash=true; log('Day '+S.day+' '+ring.id+' ADAPTS: DPIP pressure → extra hop + cash cashout.','yellow'); changed=true; }
-    if(S.levers.cov<0.5&&!ring.behavior.dark){ ring.behavior.dark=true; log('Day '+S.day+' '+ring.id+' ADAPTS: routing via non-participating banks (dark hops).','yellow'); changed=true; }
+    if(S.levers.cov<0.5&&!ring.behavior.dark){ ring.behavior.dark=true; log('Day '+S.day+' '+ring.id+' ADAPTS: routing via PNB Delhi (non-participating bank).','yellow'); changed=true; }
   }
   if(changed && !HEADLESS){
-    const thought = getAdversaryThought();
-    if(thought && typeof thought.then === 'function'){
-      thought.then(t => { document.getElementById('mind').textContent='"'+t+'"'; });
+    const thought=getAdversaryThought();
+    if(thought && typeof thought.then==='function'){
+      thought.then(t=>{ document.getElementById('mind').textContent='"'+t+'"'; });
     } else {
       document.getElementById('mind').textContent='"'+thought+'"';
     }
   }
 }
 
-// ================= ADVERSARY'S MIND =================
 const fallbackNarratives=[
   "Freezes are high. We split transfers below thresholds until your eyes glaze over.",
   "Your screens block our callers. Fresh synthetic identities are already in production.",
   "DPIP sees our cashouts. We add a hop and let cash do the talking.",
-  "Half the banks are blind to us. We route where your webhooks don't reach.",
+  "PNB Delhi doesn't share webhooks. We route where your eyes don't reach.",
   "Burned accounts are retired. We never reuse a face twice."
 ];
 function getAdversaryThought(){
@@ -305,30 +389,32 @@ function showToast(msg,color){
 
 function runScenario(type){
   if(type==='digital_arrest'){
-    for(let i=0;i<15;i++) addAgent('victim',ri(BANKS));
-    log('Day '+S.day+' SCENARIO: Digital Arrest Wave — 15 new victims injected.','purple');
+    for(let i=0;i<5;i++){
+      addNewAgent('victim',0,'Senior Citizen (new)','Mumbai, MH','103.45.'+(100+i)+'.'+Math.floor(rng()*255),'Verified');
+    }
+    log('Day '+S.day+' SCENARIO: Digital Arrest Wave — 5 new senior-citizen victims injected.','purple');
     showToast('SCENARIO INJECTED: Digital Arrest Wave','#a855f7');
   } else {
     for(let r=0;r<2;r++){
-      const ring={ id:'C-'+(10+S.rings.length+r), behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[], burned:[] };
-      ring.members.push(addAgent('coordinator',ri(BANKS),ring.id));
-      ring.members.push(addAgent('collector',ri(BANKS),ring.id));
-      ring.members.push(addAgent('relay',ri(BANKS),ring.id));
-      ring.members.push(addAgent('relay',ri(BANKS),ring.id));
-      ring.members.push(addAgent('cashout',ri(BANKS),ring.id));
-      S.rings.push(ring);
+      const ringId='C-N'+(100+S.rings.length);
+      const newRing={ id:ringId, behavior:{structuring:false,synthetic:false,cash:false,dark:false}, members:[], burned:[] };
+      newRing.members.push(addNewAgent('coordinator',2,'Network Controller (synthetic)','Delhi','45.114.'+Math.floor(rng()*255)+'.'+Math.floor(rng()*255),'Pending',ringId));
+      newRing.members.push(makeRecruit('collector',ringId));
+      newRing.members.push(makeRecruit('relay',ringId));
+      newRing.members.push(makeRecruit('relay',ringId));
+      newRing.members.push(makeRecruit('cashout',ringId));
+      S.rings.push(newRing);
     }
-    log('Day '+S.day+' SCENARIO: Synthetic KYC Farm — 2 new rings spawned.','yellow');
+    log('Day '+S.day+' SCENARIO: Synthetic KYC Farm — 2 new rings with Pending-KYC agents spawned.','yellow');
     showToast('SCENARIO INJECTED: Synthetic KYC Farm','#eab308');
   }
   render();
 }
 
-// ================= POLICY SANDBOX (A/B) =================
 let chartAB;
 function simulate(lv, days){
   HEADLESS=true;
-  seed=42; AID=0; S.seenRings=new Set();
+  seed=42;
   const saved={...S.levers};
   genWorld();
   S.levers={...lv};
@@ -353,28 +439,38 @@ function runAB(){
       {label:'Policy A — minimal defense',data:A,borderColor:'#ef4444',tension:.3,pointRadius:0},
       {label:'Policy B — U30 + DPIP + 90% coverage',data:B,borderColor:'#06b6d4',tension:.3,pointRadius:0}]},
     options:{plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#64748b'}},y:{ticks:{color:'#64748b'}}}}});
-  seed=42; AID=0; S.seenRings=new Set(); genWorld(); render();
+  seed=42; S.seenRings=new Set(); genWorld(); render();
 }
 
-// ================= UI =================
 const COLORS={victim:'#3b82f6',collector:'#eab308',relay:'#eab308',cashout:'#ef4444',coordinator:'#9333ea',family:'#475569',merchant:'#475569'};
+const ROLE_TEXT={victim:'text-blue-400',collector:'text-yellow-400',relay:'text-yellow-400',cashout:'text-red-400',coordinator:'text-purple-400',family:'text-slate-400',merchant:'text-slate-400'};
 let network, nodesDS, edgesDS, chartLoss, chartDet;
 function initUI(){
   nodesDS=new vis.DataSet(); edgesDS=new vis.DataSet();
   network=new vis.Network(document.getElementById('graph'),{nodes:nodesDS,edges:edgesDS},
-    {physics:{barnesHut:{gravitationalConstant:-4000,springLength:90}},interaction:{hover:true}});
+    {physics:{barnesHut:{gravitationalConstant:-5000,springLength:120,centralGravity:0.01}},interaction:{hover:true}});
   network.on("click", function(params){
     const box=document.getElementById('inspector');
     if(params.nodes.length>0){
       const a=byId[params.nodes[0]];
       if(a){
         box.classList.remove('hidden');
+        const bankMeta=BANKS_DATA[a.bank];
+        const ringCol=a.ringId?'text-red-400':'text-slate-400';
         document.getElementById('ins-body').innerHTML=
-          '<div class="text-cyan-400 font-bold mb-1">'+a.id+' ('+a.type+')</div>'+
-          '<div>Bank Node: '+a.bank+'</div>'+
-          '<div>Ring ID: <span class="'+(a.ringId?'text-red-400':'text-slate-400')+'">'+(a.ringId||'None')+'</span></div>'+
-          '<div>Risk Score: '+a.flagged.toFixed(2)+'</div>'+
-          '<div>Status: '+(a.frozen?'<span class="text-red-500">FROZEN (Day '+a.frozenDay+')</span>':'Active')+'</div>';
+          '<div class="text-cyan-400 font-bold mb-2 text-sm">'+a.id+'</div>'+
+          '<div class="text-white font-semibold mb-1">'+a.name+'</div>'+
+          '<div class="text-slate-400 mb-2">Role: <span class="'+ROLE_TEXT[a.type]+'">'+a.type.toUpperCase()+'</span></div>'+
+          '<div class="border-t border-slate-700 pt-2 space-y-1">'+
+            '<div>Bank: <span class="text-white">'+bankMeta.name+'</span> ('+bankMeta.short+')</div>'+
+            '<div>IFSC: <span class="text-slate-300">'+bankMeta.ifsc+'</span></div>'+
+            '<div>Region: <span class="text-white">'+a.region+'</span></div>'+
+            '<div>IP: <span class="text-slate-300">'+a.ip+'</span></div>'+
+            '<div>KYC: <span class="'+(a.kyc==='Verified'?'text-green-400':'text-yellow-400')+'">'+a.kyc+'</span></div>'+
+            '<div>Ring: <span class="'+ringCol+'">'+(a.ringId||'None')+'</span></div>'+
+            '<div>Risk: <span class="'+(a.flagged>=0.7?'text-red-400':'text-slate-300')+'">'+a.flagged.toFixed(2)+'</span></div>'+
+            '<div>Status: '+(a.frozen?'<span class="text-red-500 font-bold">FROZEN (Day '+a.frozenDay+')</span>':'<span class="text-green-400">Active</span>')+'</div>'+
+          '</div>';
         return;
       }
     }
@@ -396,13 +492,22 @@ function render(){
   const xray=document.getElementById('xray').checked;
   document.body.classList.toggle('xray-on', xray);
   nodesDS.clear(); edgesDS.clear();
-  S.agents.forEach(a=>{ nodesDS.add({id:a.id,label:a.id,shape:a.type==='coordinator'?'star':'dot',
-    size:a.type==='coordinator'?22:16,
-    color:{background:a.frozen?'#334155':COLORS[a.type],border:a.flagged>=S.levers.th?'#ef4444':'#0f172a'},
-    font:{color:'#94a3b8',size:11}}); });
+  S.agents.forEach(a=>{
+    const bankMeta=BANKS_DATA[a.bank];
+    const shortLabel=a.id.split('-').slice(0,2).join('-');
+    nodesDS.add({
+      id:a.id, label:shortLabel,
+      shape:a.type==='coordinator'?'star':'dot',
+      size:a.type==='coordinator'?24:16,
+      color:{ background:a.frozen?'#334155':COLORS[a.type],
+        border:a.flagged>=S.levers.th?'#ef4444':bankMeta.color },
+      font:{color:'#e2e8f0',size:10},
+      title:a.name+' — '+a.region+' ('+bankMeta.short+')'
+    });
+  });
   S.recent.forEach(t=>{
     if(t.visible||xray) edgesDS.add({from:t.from,to:t.to,arrows:'to',
-      dashes:(!t.visible&&xray), color:{color:t.visible?'#334155':'#b91c1c'}, width:t.ring?2:1});
+      dashes:(!t.visible&&xray), color:{color:t.visible?'#475569':'#b91c1c'}, width:t.ring?2:1});
   });
   const L=S.metrics.map(m=>m.day);
   chartLoss.data.labels=L; chartLoss.data.datasets[0].data=S.metrics.map(m=>m.loss); chartLoss.update('none');
@@ -412,20 +517,18 @@ function render(){
   chartDet.data.datasets[2].data=S.metrics.map(m=>m.fp);
   chartDet.update('none');
 
-  // RING STRATEGIES + SCOREBOARD
   document.getElementById('strategies').innerHTML = S.rings.map(r=>{ const b=r.behavior;
-    const operational = r.members.some(m=>m.type==='collector'&&!m.frozen) && r.members.some(m=>m.type==='cashout'&&!m.frozen);
-    const tags=[b.structuring?'structuring':null,b.synthetic?'synthetic-KYC':null,b.cash?'cash-out':null,b.dark?'dark hops':null].filter(Boolean);
+    const operational=r.members.some(m=>m.type==='collector'&&!m.frozen)&&r.members.some(m=>m.type==='cashout'&&!m.frozen);
+    const tags=[b.structuring?'structuring':null,b.synthetic?'synthetic-KYC':null,b.cash?'cash-out':null,b.dark?'dark hops (PNB)':null].filter(Boolean);
     return '<div><span class="text-cyan-300">'+r.id+'</span> '+(operational?'<span class="text-emerald-400">ACTIVE</span>':'<span class="text-red-400">DORMANT</span>')+' · '+(tags.length?tags.join(' · '):'no pressure yet')+'</div>'; }).join('');
   const stolen=S.metrics.reduce((s,m)=>s+m.loss,0);
   document.getElementById('stolen').textContent=Math.round(stolen/100000);
   document.getElementById('burnedN').textContent=S.agents.filter(a=>a.frozen&&a.ringId).length;
   document.getElementById('victims').textContent=new Set(S.txns.filter(t=>t.ring&&byId[t.from]&&byId[t.from].type==='victim').map(t=>t.from)).size;
 
-  // BURNED ACCOUNTS
   const rows=S.rings.flatMap(r=>r.burned.map(b=>({...b,ring:r.id})));
   document.getElementById('burned').innerHTML = rows.length
-    ? rows.slice(-30).reverse().map(b=>'<div><span class="text-red-400">'+b.id+'</span> ('+b.type+') · '+b.ring+' · burned D'+b.day+'</div>').join('')
+    ? rows.slice(-30).reverse().map(b=>{ const a=byId[b.id]; return '<div><span class="text-red-400">'+b.id+'</span> ('+b.type+') · '+(a?a.region:'?')+' · '+b.ring+' · D'+b.day+'</div>'; }).join('')
     : 'No accounts burned yet.';
 }
 
@@ -437,7 +540,7 @@ function log(msg,color){
 
 document.getElementById('play').onclick=e=>{ S.running=!S.running; e.target.textContent=S.running?'⏸ Pause':'▶ Play'; };
 document.getElementById('speed').onchange=e=>{ S.speed=parseFloat(e.target.value); };
-document.getElementById('reset').onclick=()=>{ seed=42; AID=0; S.seenRings=new Set();
+document.getElementById('reset').onclick=()=>{ seed=42; S.seenRings=new Set();
   document.getElementById('log').innerHTML=''; document.getElementById('day').textContent='0';
   document.getElementById('mind').textContent='"Waiting for pressure. Every lever you pull teaches me."';
   document.getElementById('speed').value='1'; S.speed=1;
