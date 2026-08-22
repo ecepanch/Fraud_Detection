@@ -17,6 +17,8 @@
   .rubric-pill{background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);padding:2px 8px;border-radius:999px;font-size:10px;color:#67e8f9}
   .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
   .bank-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-right:6px}
+  #graphpanel:fullscreen{background:#0f172a;padding:10px}
+  #graphpanel:fullscreen #graph{height:92vh !important}
 </style>
 </head>
 <body class="p-4">
@@ -56,6 +58,7 @@
     <option value="8">8x</option>
   </select>
   <button id="reset" class="bg-slate-700 px-3 py-1.5 rounded">↺ Reset</button>
+  <button id="fs" class="bg-slate-700 px-3 py-1.5 rounded" title="Fullscreen the graph">⛶</button>
   <label class="flex items-center gap-2 text-yellow-300"><input id="xray" type="checkbox" class="lever"> X-RAY (God View)</label>
   <span class="font-mono text-red-400">STOLEN ₹<span id="stolen">0</span>L</span>
   <span class="font-mono text-slate-300">BURNED <span id="burnedN">0</span></span>
@@ -63,11 +66,11 @@
 </div>
 
 <div class="max-w-7xl mx-auto grid lg:grid-cols-3 gap-4">
-  <div class="lg:col-span-2 panel p-2">
+  <div class="lg:col-span-2 panel p-2" id="graphpanel">
     <div class="flex flex-wrap gap-2 p-2 border-b border-slate-700 text-xs">
-      <span class="bank-pill" style="background:rgba(59,130,246,0.15);color:#93c5fd"><span class="legend-dot" style="background:#3b82f6"></span>HDFC — Mumbai/Pune</span>
-      <span class="bank-pill" style="background:rgba(234,179,8,0.15);color:#fde68a"><span class="legend-dot" style="background:#eab308"></span>SBI — Patna/Ranchi/Solapur</span>
-      <span class="bank-pill" style="background:rgba(239,68,68,0.15);color:#fca5a5"><span class="legend-dot" style="background:#ef4444"></span>PNB — Delhi (non-participating)</span>
+      <span class="bank-pill" style="background:rgba(59,130,246,0.15);color:#93c5fd"><span class="legend-dot" style="background:#3b82f6"></span>HDFC — Mumbai/Pune (victims)</span>
+      <span class="bank-pill" style="background:rgba(234,179,8,0.15);color:#fde68a"><span class="legend-dot" style="background:#eab308"></span>SBI — Patna/Ranchi/Solapur (mules)</span>
+      <span class="bank-pill" style="background:rgba(239,68,68,0.15);color:#fca5a5"><span class="legend-dot" style="background:#ef4444"></span>PNB — Delhi (bosses, non-participating)</span>
       <span class="bank-pill" style="background:rgba(147,51,234,0.15);color:#d8b4fe"><span class="legend-dot" style="background:#9333ea"></span>★ Coordinator</span>
     </div>
     <div id="graph" style="height:430px;border-radius:10px"></div>
@@ -150,6 +153,15 @@ const ID_REGION={collector:'Patna, BR',relay:'Ranchi, JH',cashout:'Solapur, MH',
 function resetIdCounters(){ NEXT_NUM={collector:900,relay:900,cashout:900,coordinator:900,victim:900}; }
 function nextId(role){ return ID_PREFIX[role]+String(NEXT_NUM[role]++).padStart(3,'0'); }
 
+// ============ CALM 3-COLUMN LAYOUT (HDFC left → SBI middle → PNB right) ============
+const LANE_X={0:-520,1:0,2:520};
+let LANE_POS={0:0,1:0,2:0};
+function assignPos(a){
+  const i=LANE_POS[a.bank]++;
+  a.x=LANE_X[a.bank]+((i%3)*80-80);
+  a.y=Math.floor(i/3)*110-430;
+}
+
 const SEED_ACCOUNTS = [
   ['V-MUM-001','victim',0,'Account Holder A','Mumbai, MH','103.45.67.89','Verified'],
   ['V-MUM-002','victim',0,'Account Holder B','Mumbai, MH','103.45.67.102','Verified'],
@@ -197,12 +209,14 @@ const SEED_ACCOUNTS = [
 function addAgentFromSeed(s, ringId){
   const a={ id:s[0], type:s[1], bank:s[2], name:s[3], region:s[4], ip:s[5], kyc:s[6],
     ringId:ringId||null, frozen:false, frozenDay:0, flagged:0 };
+  assignPos(a);
   S.agents.push(a); byId[a.id]=a; return a;
 }
 
 function addNewAgent(type,bank,name,region,ip,kyc,ringId){
   const a={ id:nextId(type), type:type, bank:bank, name:name, region:region, ip:ip, kyc:kyc,
     ringId:ringId||null, frozen:false, frozenDay:0, flagged:0 };
+  assignPos(a);
   S.agents.push(a); byId[a.id]=a; return a;
 }
 
@@ -215,6 +229,7 @@ function genWorld(){
   S.agents.length=0; S.txns.length=0; S.rings.length=0; S.metrics.length=0; S.recent.length=0; S.day=0;
   for(const k in byId) delete byId[k];
   resetIdCounters();
+  LANE_POS={0:0,1:0,2:0};
 
   SEED_ACCOUNTS.forEach(s=>{
     let ringId=null;
@@ -448,7 +463,7 @@ let network, nodesDS, edgesDS, chartLoss, chartDet;
 function initUI(){
   nodesDS=new vis.DataSet(); edgesDS=new vis.DataSet();
   network=new vis.Network(document.getElementById('graph'),{nodes:nodesDS,edges:edgesDS},
-    {physics:{barnesHut:{gravitationalConstant:-5000,springLength:120,centralGravity:0.01}},interaction:{hover:true}});
+    {physics:false,interaction:{hover:true}});
   network.on("click", function(params){
     const box=document.getElementById('inspector');
     if(params.nodes.length>0){
@@ -496,12 +511,12 @@ function render(){
     const bankMeta=BANKS_DATA[a.bank];
     const shortLabel=a.id.split('-').slice(0,2).join('-');
     nodesDS.add({
-      id:a.id, label:shortLabel,
+      id:a.id, label:shortLabel, x:a.x, y:a.y,
       shape:a.type==='coordinator'?'star':'dot',
-      size:a.type==='coordinator'?24:16,
+      size:a.type==='coordinator'?26:18,
       color:{ background:a.frozen?'#334155':COLORS[a.type],
         border:a.flagged>=S.levers.th?'#ef4444':bankMeta.color },
-      font:{color:'#e2e8f0',size:10},
+      font:{color:'#e2e8f0',size:12},
       title:a.name+' — '+a.region+' ('+bankMeta.short+')'
     });
   });
@@ -545,6 +560,12 @@ document.getElementById('reset').onclick=()=>{ seed=42; S.seenRings=new Set();
   document.getElementById('mind').textContent='"Waiting for pressure. Every lever you pull teaches me."';
   document.getElementById('speed').value='1'; S.speed=1;
   genWorld(); render(); setTimeout(()=>network.fit(),100); };
+document.getElementById('fs').onclick=()=>{
+  const el=document.getElementById('graphpanel');
+  if(document.fullscreenElement) document.exitFullscreen();
+  else el.requestFullscreen();
+};
+document.addEventListener('fullscreenchange',()=>{ setTimeout(()=>{ if(network) network.fit(); },100); });
 document.getElementById('th').oninput=e=>{ S.levers.th=+e.target.value; document.getElementById('th-val').textContent=S.levers.th.toFixed(2); };
 document.getElementById('u30').onchange=e=>{ S.levers.u30=e.target.checked; log('Day '+S.day+' LEVER: U30 '+(S.levers.u30?'ON':'OFF'),'cyan'); };
 document.getElementById('dpip').onchange=e=>{ S.levers.dpip=e.target.checked; log('Day '+S.day+' LEVER: DPIP '+(S.levers.dpip?'ON':'OFF'),'cyan'); };
