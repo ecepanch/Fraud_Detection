@@ -576,6 +576,13 @@ document.getElementById('ab').onclick=runAB;
 
 function loop(){ if(S.running) tick(); setTimeout(loop, 600/S.speed); }
 
+const _p = new URLSearchParams(location.search);
+const _stolen = +_p.get('stolen') || 0;
+if(_stolen){
+  setTimeout(()=>log('Day 0: ₹'+(_stolen/100000).toFixed(1)+
+    'L received from V-MUM-001 — traced from the call.','red'), 300);
+}
+  
 initUI(); genWorld(); render(); loop();
 </script>
 </body>
